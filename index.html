@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AR Open Question Collector</title>
+
+  <!-- TensorFlow.js + COCO-SSD สำหรับตรวจจับวัตถุ -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────── */
+    :root {
+      --bg:       #0a0e17;
+      --surface:  #111827;
+      --card:     #1a2235;
+      --border:   #2a3a55;
+      --accent:   #00e5ff;
+      --accent2:  #7b61ff;
+      --success:  #00e096;
+      --warn:     #ffb547;
+      --danger:   #ff4f6e;
+      --text:     #e8edf5;
+      --muted:    #5b6f8a;
+      --radius:   18px;
+      --radius-sm:10px;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ─── Background mesh ───────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(0,229,255,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 110%, rgba(123,97,255,.14) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Layout ────────────────────────────────────────── */
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: 20px 16px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ─── Header ────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 0 20px rgba(0,229,255,.3);
+    }
+    .header-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -.3px;
+      line-height: 1.2;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-text p {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ─── Warning Banner ────────────────────────────────── */
+    .banner {
+      background: rgba(255,181,71,.1);
+      border: 1px solid rgba(255,181,71,.35);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: .82rem;
+      color: var(--warn);
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .banner span { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .banner.hidden { display: none; }
+
+    /* ─── Camera Card ───────────────────────────────────── */
+    .camera-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* กรอบกล้อง 4:3 */
+    .camera-wrap {
+      position: relative;
+      width: 100%;
+      padding-bottom: 75%; /* 4:3 */
+      background: #070b12;
+      overflow: hidden;
+    }
+    .camera-wrap video,
+    .camera-wrap canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    /* canvas ซ้อนทับ video */
+    #overlay { z-index: 2; }
+
+    /* Placeholder ตอนยังไม่เปิดกล้อง */
+    #camera-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    #camera-placeholder .cam-icon { font-size: 2.8rem; }
+    #camera-placeholder.hidden { display: none; }
+
+    /* Status pill */
+    .status-pill {
+      position: absolute;
+      top: 10px; left: 10px;
+      z-index: 3;
+      background: rgba(10,14,23,.75);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-size: .72rem;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background .3s;
+    }
+    .status-dot.live { background: var(--danger); animation: blink 1.2s infinite; }
+    .status-dot.detecting { background: var(--accent); }
+
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+
+    /* ─── Camera Controls ───────────────────────────────── */
+    .cam-controls {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .cam-info {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .cam-info strong { color: var(--text); font-weight: 600; }
+
+    /* ─── Buttons ───────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 7px;
+      border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: .9rem;
+      border-radius: 12px;
+      padding: 12px 22px;
+      transition: all .2s ease;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(0,229,255,.25);
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 6px 28px rgba(0,229,255,.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: rgba(255,79,110,.15);
+      border: 1px solid rgba(255,79,110,.4);
+      color: var(--danger);
+    }
+    .btn-danger:hover:not(:disabled) { background: rgba(255,79,110,.25); }
+
+    .btn-success {
+      background: linear-gradient(135deg, #00c479, var(--success));
+      color: #fff;
+      width: 100%;
+      font-size: 1rem;
+      padding: 15px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,224,150,.2);
+    }
+    .btn-success:hover:not(:disabled) { box-shadow: 0 6px 28px rgba(0,224,150,.35); transform: translateY(-1px); }
+
+    .btn-sm { padding: 8px 14px; font-size: .82rem; border-radius: 9px; }
+
+    /* ─── Error Box ─────────────────────────────────────── */
+    #cam-error {
+      margin: 0 16px 14px;
+      background: rgba(255,79,110,.1);
+      border: 1px solid rgba(255,79,110,.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: .82rem;
+      color: var(--danger);
+      display: none;
+    }
+
+    /* ─── Detection Result ──────────────────────────────── */
+    #detection-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+      animation: slideUp .35s ease;
+    }
+    #detection-panel.show { display: flex; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .detected-label {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .detected-label .obj-badge {
+      background: linear-gradient(135deg, rgba(0,229,255,.18), rgba(123,97,255,.18));
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .detected-label .conf-text {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* คำถาม */
+    .question-box {
+      background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(123,97,255,.06));
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 14px 16px;
+    }
+    .question-label {
+      font-size: .7rem;
+      font-weight: 600;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 6px;
+    }
+    #question-text {
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    /* ─── Form ──────────────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .form-group input,
+    .form-group textarea {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      padding: 12px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      resize: none;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--muted); }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,.12);
+    }
+
+    /* ─── Toast ─────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 22px;
+      font-size: .88rem;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      z-index: 999;
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      opacity: 0;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    #toast.success { border-color: rgba(0,224,150,.4); color: var(--success); }
+    #toast.error   { border-color: rgba(255,79,110,.4); color: var(--danger); }
+
+    /* ─── Loading spinner ───────────────────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Model Loading Overlay ──────────────────────────── */
+    #model-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10,14,23,.82);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border-radius: var(--radius);
+    }
+    #model-overlay p { font-size: .85rem; color: var(--muted); }
+    #model-overlay.hidden { display: none; }
+
+    /* ─── Scanning line animation ────────────────────────── */
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      z-index: 4;
+      animation: scanMove 2.5s ease-in-out infinite;
+      opacity: .7;
+    }
+    @keyframes scanMove {
+      0%   { top: 0; }
+      100% { top: 100%; }
+    }
+    .scan-line.hidden { display: none; }
+
+    /* ─── Corner Brackets ───────────────────────────────── */
+    .corner {
+      position: absolute;
+      width: 22px; height: 22px;
+      z-index: 5;
+      opacity: .6;
+    }
+    .corner.tl { top: 8px; left: 8px;  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .corner.tr { top: 8px; right: 8px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .corner.bl { bottom: 8px; left: 8px;  border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .corner.br { bottom: 8px; right: 8px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+    /* ─── Footer ────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: auto;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="logo-icon">🔍</div>
+    <div class="header-text">
+      <h1>AR Question Collector</h1>
+      <p>Point camera · Detect · Answer</p>
+    </div>
+  </header>
+
+  <!-- ── Warning: ยังไม่ได้ตั้งค่า URL ── -->
+  <div class="banner" id="url-warning">
+    <span>⚠️</span>
+    <div>
+      <strong>Setup Required:</strong> กรุณาใส่ Google Apps Script URL ในตัวแปร <code>GOOGLE_SCRIPT_URL</code> ภายในไฟล์ JavaScript ก่อนใช้งาน
+    </div>
+  </div>
+
+  <!-- ── Camera Card ── -->
+  <div class="camera-card">
+
+    <!-- Model loading overlay -->
+    <div id="model-overlay">
+      <div class="spinner"></div>
+      <p>กำลังโหลด AI Model...</p>
+    </div>
+
+    <!-- กรอบกล้อง 4:3 -->
+    <div class="camera-wrap">
+      <!-- Corner brackets -->
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <!-- Scanning animation -->
+      <div class="scan-line hidden" id="scan-line"></div>
+
+      <!-- Status pill -->
+      <div class="status-pill">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">ยังไม่เปิดกล้อง</span>
+      </div>
+
+      <!-- Placeholder -->
+      <div id="camera-placeholder">
+        <div class="cam-icon">📷</div>
+        <p>กดปุ่มด้านล่างเพื่อเริ่มใช้กล้อง</p>
+      </div>
+
+      <!-- Video + Canvas -->
+      <video id="video" autoplay playsinline muted style="display:none;"></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <!-- Error box -->
+    <div id="cam-error"></div>
+
+    <!-- Controls -->
+    <div class="cam-controls">
+      <div class="cam-info">
+        <span id="cam-info-text">AI พร้อมใช้งาน</span>
+      </div>
+      <button class="btn btn-primary" id="start-btn" disabled>
+        <span>📷</span> เริ่มเปิดกล้อง
+      </button>
+      <button class="btn btn-danger btn-sm" id="stop-btn" style="display:none;">
+        หยุด
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Detection & Question Panel ── -->
+  <div id="detection-panel">
+    <div class="detected-label">
+      <span class="obj-badge" id="obj-badge">—</span>
+      <span class="conf-text" id="conf-text"></span>
+    </div>
+
+    <div class="question-box">
+      <div class="question-label">📝 Open Question</div>
+      <div id="question-text">—</div>
+    </div>
+
+    <div class="form-group">
+      <label for="name-input">ชื่อผู้ตอบ</label>
+      <input type="text" id="name-input" placeholder="กรอกชื่อของคุณ..." maxlength="80" />
+    </div>
+
+    <div class="form-group">
+      <label for="answer-input">คำตอบของคุณ</label>
+      <textarea id="answer-input" rows="4" placeholder="พิมพ์คำตอบที่นี่..."></textarea>
+    </div>
+
+    <button class="btn btn-success" id="submit-btn">
+      ✅ ส่งคำตอบ
+    </button>
+  </div>
+
+  <footer>AR Open Question Collector · Powered by TensorFlow.js COCO-SSD</footer>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+/* ─────────────────────────────────────────────────────
+   🔧 CONFIG — แก้ค่านี้ให้เป็น URL จาก Google Apps Script
+   ───────────────────────────────────────────────────── */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz707C-O-CE6q5DkBtSi6ixCFHiPg-OGQ1XoUVqNBgM5yLs54XntHH-sv5XTCEpsecu/exec";
+
+/* ─────────────────────────────────────────────────────
+   📋 QUESTION BANK
+   คีย์ = ชื่อ class ที่ COCO-SSD ส่งกลับมา (ภาษาอังกฤษ)
+   value = array ของคำถามปลายเปิด
+   ───────────────────────────────────────────────────── */
+const QUESTION_BANK = {
+  "cell phone": [
+    "How do you use this object?",
+    "When do you usually use this object?",
+    "Why is this object useful?"
+  ],
+  "cup": [
+    "What do you use this for?",
+    "What can you put inside this object?",
+    "Where do you usually see this object?"
+  ],
+  "chair": [
+    "What do you use this object for?",
+    "Where do people usually use this object?",
+    "Describe how you use this object."
+  ],
+  "book": [
+    "What can you learn from this object?",
+    "When do you usually use this object?",
+    "Why is this object important?"
+  ],
+  "bottle": [
+    "What do you usually put in this object?",
+    "Where do you carry this object?",
+    "How do you use this object?"
+  ],
+  "laptop": [
+    "What do you use a laptop for?",
+    "When do you use this object?",
+    "Why is this object useful?"
+  ],
+  "keyboard": [
+    "What do you use this keyboard for?",
+    "When do you type on a keyboard?",
+    "Describe this object."
+  ],
+  "mouse": [
+    "What do you use this mouse for?",
+    "How does this object help you?",
+    "Where do you usually see this object?"
+  ],
+  "person": [
+    "What is this person doing?",
+    "Describe this person in one sentence.",
+    "Where do you think this person is?"
+  ]
+};
+
+/* ─────────────────────────────────────────────────────
+   DOM References
+   ───────────────────────────────────────────────────── */
+const video         = document.getElementById("video");
+const overlay       = document.getElementById("overlay");
+const startBtn      = document.getElementById("start-btn");
+const stopBtn       = document.getElementById("stop-btn");
+const camError      = document.getElementById("cam-error");
+const statusDot     = document.getElementById("status-dot");
+const statusText    = document.getElementById("status-text");
+const scanLine      = document.getElementById("scan-line");
+const modelOverlay  = document.getElementById("model-overlay");
+const camInfoText   = document.getElementById("cam-info-text");
+const placeholder   = document.getElementById("camera-placeholder");
+const urlWarning    = document.getElementById("url-warning");
+const detPanel      = document.getElementById("detection-panel");
+const objBadge      = document.getElementById("obj-badge");
+const confText      = document.getElementById("conf-text");
+const questionText  = document.getElementById("question-text");
+const nameInput     = document.getElementById("name-input");
+const answerInput   = document.getElementById("answer-input");
+const submitBtn     = document.getElementById("submit-btn");
+const toast         = document.getElementById("toast");
+const ctx           = overlay.getContext("2d");
+
+/* ─────────────────────────────────────────────────────
+   State
+   ───────────────────────────────────────────────────── */
+let model           = null;   // COCO-SSD model
+let stream          = null;   // MediaStream
+let animId          = null;   // requestAnimationFrame ID
+let currentObject   = null;   // วัตถุที่ตรวจพบล่าสุด (ที่อยู่ใน question bank)
+let currentQuestion = null;   // คำถามปัจจุบัน
+let isDetecting     = false;
+let detectionCooldown = false; // ป้องกันการ reset panel บ่อยเกินไป
+
+/* ─────────────────────────────────────────────────────
+   Utility: สุ่มคำถามจาก array
+   ───────────────────────────────────────────────────── */
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/* ─────────────────────────────────────────────────────
+   Utility: แสดง Toast notification
+   ───────────────────────────────────────────────────── */
+function showToast(msg, type = "info") {
+  toast.textContent = msg;
+  toast.className = `show ${type}`;
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.className = ""; }, 3200);
+}
+
+/* ─────────────────────────────────────────────────────
+   ตรวจสอบ URL warning
+   ───────────────────────────────────────────────────── */
+function checkUrlWarning() {
+  if (GOOGLE_SCRIPT_URL.startsWith("PASTE_YOUR")) {
+    urlWarning.classList.remove("hidden");
+  } else {
+    urlWarning.classList.add("hidden");
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   โหลด COCO-SSD Model
+   ───────────────────────────────────────────────────── */
+async function loadModel() {
+  try {
+    modelOverlay.classList.remove("hidden");
+    camInfoText.textContent = "กำลังโหลด AI...";
+    model = await cocoSsd.load();
+    modelOverlay.classList.add("hidden");
+    startBtn.disabled = false;
+    camInfoText.textContent = "AI พร้อมใช้งาน ✓";
+    console.log("✅ COCO-SSD model loaded");
+  } catch (err) {
+    modelOverlay.classList.add("hidden");
+    camInfoText.textContent = "โหลด AI ไม่สำเร็จ";
+    showToast("❌ โหลด AI Model ไม่สำเร็จ กรุณา Refresh", "error");
+    console.error("Model load error:", err);
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   เปิดกล้อง
+   ───────────────────────────────────────────────────── */
+async function startCamera() {
+  camError.style.display = "none";
+  try {
+    // ขอใช้กล้องหลัง (facingMode: environment) ก่อน
+    const constraints = {
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 960 }
+      }
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+
+    // แสดง video ซ่อน placeholder
+    video.style.display = "block";
+    placeholder.classList.add("hidden");
+    scanLine.classList.remove("hidden");
+
+    // UI state
+    startBtn.style.display = "none";
+    stopBtn.style.display = "inline-flex";
+    statusDot.className = "status-dot live";
+    statusText.textContent = "LIVE";
+    camInfoText.textContent = "กำลังตรวจจับวัตถุ...";
+
+    isDetecting = true;
+    detectLoop();
+
+  } catch (err) {
+    // แสดงข้อความแนะนำเมื่อเปิดกล้องไม่ได้
+    let msg = "ไม่สามารถเข้าถึงกล้องได้";
+    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+      msg = "🚫 ถูกปฏิเสธการใช้กล้อง — กรุณาอนุญาตการใช้กล้องในการตั้งค่าเบราว์เซอร์ แล้วลองใหม่";
+    } else if (err.name === "NotFoundError") {
+      msg = "📷 ไม่พบกล้องในอุปกรณ์นี้";
+    } else if (err.name === "NotSupportedError" || location.protocol !== "https:") {
+      msg = "🔒 กรุณาเปิดผ่าน HTTPS (GitHub Pages) เพื่อใช้งานกล้อง";
+    }
+    camError.textContent = msg;
+    camError.style.display = "block";
+    console.error("Camera error:", err);
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   หยุดกล้อง
+   ───────────────────────────────────────────────────── */
+function stopCamera() {
+  isDetecting = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  video.srcObject = null;
+  video.style.display = "none";
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  placeholder.classList.remove("hidden");
+  scanLine.classList.add("hidden");
+  startBtn.style.display = "inline-flex";
+  stopBtn.style.display = "none";
+  statusDot.className = "status-dot";
+  statusText.textContent = "ยังไม่เปิดกล้อง";
+  camInfoText.textContent = "AI พร้อมใช้งาน ✓";
+
+  // ซ่อน detection panel
+  hideDetectionPanel();
+}
+
+/* ─────────────────────────────────────────────────────
+   Detection Loop (requestAnimationFrame)
+   ───────────────────────────────────────────────────── */
+async function detectLoop() {
+  if (!isDetecting) return;
+
+  // ซิงค์ขนาด canvas กับ video
+  if (video.videoWidth > 0) {
+    overlay.width  = video.videoWidth;
+    overlay.height = video.videoHeight;
+  }
+
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  // ตรวจจับวัตถุ
+  let predictions = [];
+  try {
+    predictions = await model.detect(video);
+  } catch (e) {
+    // model อาจยังไม่พร้อม ข้ามรอบนี้
+  }
+
+  // กรองเฉพาะวัตถุที่อยู่ใน Question Bank
+  const supported = predictions.filter(p =>
+    QUESTION_BANK.hasOwnProperty(p.class) && p.score > 0.45
+  );
+
+  if (supported.length > 0) {
+    // ใช้วัตถุที่ confidence สูงที่สุด
+    const best = supported.reduce((a, b) => a.score > b.score ? a : b);
+    drawBox(best);
+
+    // อัปเดต status
+    statusDot.className = "status-dot detecting";
+    statusText.textContent = "DETECTING";
+
+    // แสดง panel ถ้าวัตถุเปลี่ยน
+    if (!detectionCooldown && best.class !== currentObject) {
+      currentObject   = best.class;
+      currentQuestion = pickRandom(QUESTION_BANK[best.class]);
+      showDetectionPanel(best);
+    }
+
+  } else {
+    // ไม่พบวัตถุที่รองรับ
+    statusDot.className = "status-dot live";
+    statusText.textContent = "LIVE";
+  }
+
+  // วาดกรอบของวัตถุอื่น ๆ ที่พบแต่ไม่รองรับ (สีเทา, บาง)
+  predictions.forEach(p => {
+    if (!QUESTION_BANK.hasOwnProperty(p.class) && p.score > 0.45) {
+      drawBoxUnsupported(p);
+    }
+  });
+
+  animId = requestAnimationFrame(detectLoop);
+}
+
+/* ─────────────────────────────────────────────────────
+   วาดกรอบวัตถุที่รองรับ (สี accent)
+   ───────────────────────────────────────────────────── */
+function drawBox(pred) {
+  const [x, y, w, h] = pred.bbox;
+  const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
+
+  // กรอบ
+  ctx.strokeStyle = "#00e5ff";
+  ctx.lineWidth   = 2.5;
+  ctx.shadowColor = "#00e5ff";
+  ctx.shadowBlur  = 10;
+  ctx.strokeRect(x, y, w, h);
+  ctx.shadowBlur  = 0;
+
+  // Label background
+  ctx.fillStyle = "rgba(0,229,255,.85)";
+  const textW = ctx.measureText(label).width + 16;
+  ctx.fillRect(x, y - 26, textW, 26);
+
+  // Label text
+  ctx.fillStyle = "#0a0e17";
+  ctx.font = "bold 13px 'DM Sans', sans-serif";
+  ctx.fillText(label, x + 8, y - 8);
+}
+
+/* ─────────────────────────────────────────────────────
+   วาดกรอบวัตถุที่ไม่รองรับ (สีเทา, จาง)
+   ───────────────────────────────────────────────────── */
+function drawBoxUnsupported(pred) {
+  const [x, y, w, h] = pred.bbox;
+  ctx.strokeStyle = "rgba(255,255,255,.2)";
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(x, y, w, h);
+}
+
+/* ─────────────────────────────────────────────────────
+   แสดง Detection Panel
+   ───────────────────────────────────────────────────── */
+function showDetectionPanel(pred) {
+  objBadge.textContent    = pred.class;
+  confText.textContent    = `Confidence: ${(pred.score * 100).toFixed(0)}%`;
+  questionText.textContent = currentQuestion;
+
+  // clear ช่องกรอกคำตอบ (แต่ไม่ clear ชื่อ เพื่อความสะดวก)
+  answerInput.value = "";
+
+  detPanel.classList.add("show");
+
+  // scroll ลงไปที่ panel
+  detPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  // cooldown 3 วินาที ป้องกัน panel กระพริบ
+  detectionCooldown = true;
+  setTimeout(() => { detectionCooldown = false; }, 3000);
+}
+
+/* ─────────────────────────────────────────────────────
+   ซ่อน Detection Panel
+   ───────────────────────────────────────────────────── */
+function hideDetectionPanel() {
+  detPanel.classList.remove("show");
+  currentObject   = null;
+  currentQuestion = null;
+  objBadge.textContent = "—";
+  questionText.textContent = "—";
+  answerInput.value = "";
+}
+
+/* ─────────────────────────────────────────────────────
+   ส่งข้อมูลไป Google Apps Script
+   ───────────────────────────────────────────────────── */
+async function submitAnswer() {
+  const name   = nameInput.value.trim();
+  const answer = answerInput.value.trim();
+
+  // Validation
+  if (!name) {
+    showToast("⚠️ กรุณากรอกชื่อผู้ตอบ", "error");
+    nameInput.focus();
+    return;
+  }
+  if (!answer) {
+    showToast("⚠️ กรุณากรอกคำตอบ", "error");
+    answerInput.focus();
+    return;
+  }
+  if (!currentObject) {
+    showToast("⚠️ ยังไม่พบวัตถุที่รองรับ", "error");
+    return;
+  }
+  if (GOOGLE_SCRIPT_URL.startsWith("PASTE_YOUR")) {
+    showToast("⚠️ ยังไม่ได้ตั้งค่า Google Script URL", "error");
+    return;
+  }
+
+  // Loading state
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = `<div class="spinner"></div> กำลังส่ง...`;
+
+  // เตรียมข้อมูลที่จะส่ง
+  const payload = new URLSearchParams({
+    name:           name,
+    detectedObject: currentObject,
+    question:       currentQuestion,
+    answer:         answer,
+    userAgent:      navigator.userAgent
+  });
+
+  try {
+    // ส่งข้อมูลแบบ POST ไปยัง Google Apps Script
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  "POST",
+      mode:    "no-cors", // จำเป็นสำหรับ Apps Script
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body:    payload.toString()
+    });
+
+    // no-cors จะไม่ได้ response body — ถือว่าสำเร็จ
+    showToast("✅ ส่งคำตอบสำเร็จ!", "success");
+    answerInput.value   = "";
+    detectionCooldown   = false; // รีเซ็ต cooldown
+    currentObject       = null;  // รอตรวจจับวัตถุใหม่
+    detPanel.classList.remove("show");
+
+  } catch (err) {
+    showToast("❌ ส่งไม่สำเร็จ กรุณาลองใหม่", "error");
+    console.error("Submit error:", err);
+
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = "✅ ส่งคำตอบ";
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   Event Listeners
+   ───────────────────────────────────────────────────── */
+startBtn.addEventListener("click", startCamera);
+stopBtn.addEventListener("click", stopCamera);
+submitBtn.addEventListener("click", submitAnswer);
+
+/* ─────────────────────────────────────────────────────
+   Init
+   ───────────────────────────────────────────────────── */
+checkUrlWarning();
+loadModel(); // โหลด AI Model ทันทีที่เปิดหน้าเว็บ
+</script>
+</body>
+</html>
