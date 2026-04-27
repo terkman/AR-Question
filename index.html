@@ -673,6 +673,363 @@
     @media (min-width: 500px) {
       .menu-inner { max-width: 420px; }
     }
+
+
+    /* ===================================================
+       AR REALISM OVERRIDES: Text-only 3D popup, no scan UI
+       - ไม่มีกล่องพื้นหลัง popup
+       - ไม่มีกรอบสแกน / bounding box / status สแกน
+       - เหลือเฉพาะข้อความ 3D ลอยบนกล้อง
+    =================================================== */
+
+    .ar-topbar {
+      justify-content: flex-start !important;
+      background: transparent !important;
+      padding: 12px 14px !important;
+      padding-top: max(12px, env(safe-area-inset-top)) !important;
+    }
+
+    .btn-back {
+      background: rgba(0,0,0,0.28) !important;
+      border: 0 !important;
+      color: rgba(255,255,255,0.82) !important;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.20) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+
+    .ar-brand,
+    #statusBadge,
+    .center-guide,
+    #lockIndicator,
+    #popupConnector,
+    .popup-divider,
+    .popup-hint {
+      display: none !important;
+    }
+
+    #overlayCanvas {
+      opacity: 0 !important;
+    }
+
+    #arPopupWrapper {
+      z-index: 20 !important;
+      perspective: 1000px;
+    }
+
+    #questionPopup {
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      width: min(88vw, 460px) !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
+      text-align: center !important;
+      transform-style: preserve-3d;
+      transform-origin: center center !important;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.50));
+    }
+
+    #questionPopup::before,
+    #questionPopup::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .popup-object-tag {
+      width: 100%;
+      display: flex !important;
+      justify-content: center;
+      align-items: center;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      margin: 0 0 8px !important;
+      color: #00ffe0 !important;
+      font-family: var(--font-en);
+      font-size: clamp(13px, 3.2vw, 18px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.8px !important;
+      text-transform: uppercase;
+      text-shadow:
+        0 1px 0 #008f83,
+        0 2px 0 #006f68,
+        0 5px 10px rgba(0,0,0,0.55),
+        0 0 18px rgba(0,255,224,0.55);
+    }
+
+    .popup-dot {
+      display: none !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-en), var(--font-th), sans-serif;
+      font-size: clamp(25px, 7.2vw, 46px) !important;
+      font-weight: 800 !important;
+      line-height: 1.08 !important;
+      letter-spacing: -0.5px !important;
+      color: #ffffff !important;
+      -webkit-text-stroke: 1px rgba(0,0,0,0.55);
+      paint-order: stroke fill;
+      text-shadow:
+        0 1px 0 #d8f7ff,
+        0 2px 0 #b7eaf4,
+        0 3px 0 #87d9e5,
+        0 4px 0 #42baca,
+        0 5px 0 #1299a8,
+        0 9px 8px rgba(0,0,0,0.50),
+        0 16px 22px rgba(0,0,0,0.45),
+        0 0 22px rgba(0,255,224,0.35);
+      transform: translateZ(36px);
+    }
+
+    #questionPopup.pop-in {
+      opacity: 1 !important;
+      animation: arTextPop 0.72s cubic-bezier(0.22, 1.35, 0.28, 1) forwards !important;
+    }
+
+    #questionPopup.floating {
+      opacity: 1 !important;
+      animation: arTextFloat 4.2s ease-in-out infinite !important;
+    }
+
+    @keyframes arTextPop {
+      0% {
+        opacity: 0;
+        transform: perspective(900px) translateZ(-220px) translateY(32px) rotateX(calc(var(--tilt-y) + 24deg)) rotateY(calc(var(--tilt-x) * 1.2)) scale(0.42);
+        filter: blur(8px) drop-shadow(0 26px 20px rgba(0,0,0,0.10));
+      }
+      58% {
+        opacity: 1;
+        transform: perspective(900px) translateZ(72px) translateY(-8px) rotateX(calc(var(--tilt-y) - 4deg)) rotateY(var(--tilt-x)) scale(1.08);
+        filter: blur(0) drop-shadow(0 24px 20px rgba(0,0,0,0.52));
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(900px) translateZ(36px) translateY(0) rotateX(var(--tilt-y)) rotateY(var(--tilt-x)) scale(1);
+        filter: blur(0) drop-shadow(0 18px 18px rgba(0,0,0,0.50));
+      }
+    }
+
+    @keyframes arTextFloat {
+      0%, 100% {
+        transform: perspective(900px) translateZ(36px) translateY(0) rotateX(var(--tilt-y)) rotateY(var(--tilt-x)) scale(1);
+      }
+      50% {
+        transform: perspective(900px) translateZ(48px) translateY(-8px) rotateX(calc(var(--tilt-y) + 1deg)) rotateY(calc(var(--tilt-x) - 1deg)) scale(1.015);
+      }
+    }
+
+    /* ===================================================
+       READABLE AR QUESTION TEXT OVERRIDE
+       ปรับเฉพาะข้อความคำถามบนหน้ากล้องให้อ่านง่ายขึ้น
+       - ยังไม่มีพื้นหลัง popup
+       - ยังไม่มีกรอบสแกน
+       - เน้นตัวอักษรใหญ่ สีชัด มีขอบดำและเงาแบบ 3D
+    =================================================== */
+
+    #questionPopup {
+      width: min(92vw, 620px) !important;
+      padding: 0 8px !important;
+      text-align: center !important;
+      filter:
+        drop-shadow(0 18px 18px rgba(0,0,0,0.72))
+        drop-shadow(0 0 18px rgba(0,255,224,0.20)) !important;
+    }
+
+    .popup-object-tag {
+      margin-bottom: 10px !important;
+      font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-size: clamp(15px, 3.8vw, 23px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.2px !important;
+      color: #27ffe6 !important;
+      -webkit-text-stroke: 0.7px rgba(0,0,0,0.85) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 2px 0 #007a70,
+        0 5px 8px rgba(0,0,0,0.90),
+        0 0 10px rgba(0,255,224,0.85),
+        0 0 24px rgba(0,255,224,0.45) !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+      font-size: clamp(30px, 8.2vw, 58px) !important;
+      font-weight: 900 !important;
+      line-height: 1.12 !important;
+      letter-spacing: -0.25px !important;
+      color: #fff7d6 !important;
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
+      word-break: normal !important;
+      text-wrap: balance;
+      -webkit-text-stroke: 1.35px rgba(0,0,0,0.90) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 1px 0 #ffffff,
+        0 3px 0 #ffd447,
+        0 6px 0 #d88900,
+        0 10px 8px rgba(0,0,0,0.98),
+        0 16px 24px rgba(0,0,0,0.85),
+        0 0 4px rgba(0,0,0,1),
+        0 0 18px rgba(0,255,224,0.65),
+        0 0 36px rgba(255,212,71,0.40) !important;
+      transform: translateZ(44px) !important;
+    }
+
+    /* ถ้าคำถามยาว ให้ลดขนาดอัตโนมัติ เพื่อไม่ล้นจอ */
+    #questionPopup.long-question #popupQuestionText {
+      font-size: clamp(25px, 6.5vw, 46px) !important;
+      line-height: 1.16 !important;
+      -webkit-text-stroke-width: 1.15px !important;
+    }
+
+    #questionPopup.very-long-question #popupQuestionText {
+      font-size: clamp(21px, 5.4vw, 36px) !important;
+      line-height: 1.18 !important;
+      -webkit-text-stroke-width: 1px !important;
+      letter-spacing: 0 !important;
+    }
+
+    @media (min-width: 700px) {
+      #questionPopup {
+        width: min(84vw, 720px) !important;
+      }
+
+      #popupQuestionText {
+        font-size: clamp(42px, 6.2vw, 72px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(34px, 5vw, 56px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(28px, 4vw, 44px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #popupQuestionText {
+        font-size: clamp(27px, 8vw, 42px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(23px, 6.2vw, 34px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(20px, 5.2vw, 30px) !important;
+      }
+    }
+
+
+    /* ===================================================
+       FINAL QUESTION FONT OVERRIDE
+       ใช้ฟอนต์เดียวกับหน้าหลัก และจำกัดคำถามไม่เกิน 2 บรรทัด
+    =================================================== */
+
+    #questionPopup {
+      width: min(88vw, 560px) !important;
+      padding: 0 10px !important;
+      text-align: center !important;
+      filter:
+        drop-shadow(0 14px 16px rgba(0,0,0,0.68))
+        drop-shadow(0 0 12px rgba(0,255,224,0.18)) !important;
+    }
+
+    .popup-object-tag {
+      font-family: var(--font-en), var(--font-th), sans-serif !important;
+      font-size: clamp(11px, 2.8vw, 15px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.6px !important;
+      margin-bottom: 6px !important;
+      color: #00ffe0 !important;
+      -webkit-text-stroke: 0.45px rgba(0,0,0,0.75) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 2px 5px rgba(0,0,0,0.95),
+        0 0 12px rgba(0,255,224,0.70) !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-en), var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-size: clamp(20px, 5.6vw, 36px) !important;
+      font-weight: 800 !important;
+      line-height: 1.08 !important;
+      letter-spacing: -0.35px !important;
+      color: #ffffff !important;
+      max-width: 100% !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      overflow-wrap: anywhere !important;
+      word-break: normal !important;
+      -webkit-text-stroke: 0.95px rgba(0,0,0,0.88) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.80),
+        0 3px 0 rgba(0,199,177,0.55),
+        0 7px 8px rgba(0,0,0,0.92),
+        0 13px 18px rgba(0,0,0,0.78),
+        0 0 18px rgba(0,255,224,0.44) !important;
+      transform: translateZ(34px) !important;
+    }
+
+    #questionPopup.long-question #popupQuestionText {
+      font-size: clamp(18px, 4.9vw, 30px) !important;
+      line-height: 1.09 !important;
+      letter-spacing: -0.2px !important;
+      -webkit-text-stroke-width: 0.85px !important;
+    }
+
+    #questionPopup.very-long-question #popupQuestionText {
+      font-size: clamp(16px, 4.25vw, 24px) !important;
+      line-height: 1.10 !important;
+      letter-spacing: 0 !important;
+      -webkit-text-stroke-width: 0.75px !important;
+    }
+
+    @media (min-width: 700px) {
+      #questionPopup {
+        width: min(82vw, 640px) !important;
+      }
+
+      #popupQuestionText {
+        font-size: clamp(24px, 4.3vw, 42px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(21px, 3.7vw, 34px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(18px, 3.1vw, 28px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #popupQuestionText {
+        font-size: clamp(18px, 5.3vw, 30px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(16px, 4.6vw, 25px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(15px, 4.0vw, 21px) !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -855,23 +1212,22 @@ const SUPPORTED_OBJECTS = new Set([
 // DEFAULT_QUESTIONS: คำถามปลายเปิดทั่วไป
 // ใช้เมื่อวัตถุอยู่ใน SUPPORTED_OBJECTS แต่ไม่มีใน QUESTION_BANK
 // =====================================================
-
-// =====================================================
-// UNKNOWN_OBJECT_QUESTIONS: ใช้เมื่อ AI ไม่รู้จักวัตถุ หรือจับไม่ชัด
-// เพื่อให้ยังมีคำถาม AR ขึ้นมา แม้ COCO-SSD จะไม่รู้ชื่อวัตถุนั้น
-// =====================================================
-const UNKNOWN_OBJECT_CLASS = 'mystery object';
-const UNKNOWN_OBJECT_QUESTIONS = [
-  'What could this object be?',
-  'What story could this object tell?',
-  'What would you name this object?',
-  'How could this object be useful?',
-  'What problem could this object solve?',
-  'What would happen if it disappeared?',
-  'How would you describe this shape?',
-  'What could this become in the future?',
-  'Who might need this object?',
-  'What is one creative use for this?'
+const DEFAULT_QUESTIONS = [
+  'What is this object used for?',
+  'Where do you usually see this object?',
+  'Who uses this object the most?',
+  'How does this object make your life easier?',
+  'Describe this object in your own words.',
+  'What would happen if this object did not exist?',
+  'Can you think of another use for this object?',
+  'How is this object made or created?',
+  'What material is this object made of?',
+  'Is this object important in daily life? Why?',
+  'How has this object changed over time?',
+  'What do you like or dislike about this object?',
+  'When was the last time you used something like this?',
+  'How would a child describe this object?',
+  'If you had to explain this object to someone who had never seen it, what would you say?'
 ];
 
 // =====================================================
@@ -1640,9 +1996,7 @@ const QUESTION_BANK = {
  * @returns {string} คำถาม
  */
 function pickQuestion(objectName, lastQ) {
-  const pool = objectName === UNKNOWN_OBJECT_CLASS
-    ? UNKNOWN_OBJECT_QUESTIONS
-    : (QUESTION_BANK[objectName] || DEFAULT_QUESTIONS);
+  const pool = QUESTION_BANK[objectName] || DEFAULT_QUESTIONS;
 
   // สุ่มโดยพยายามไม่ซ้ำกับคำถามล่าสุด
   let q;
@@ -1661,8 +2015,6 @@ const CONFIDENCE_THRESHOLD = 0.65;   // confidence ขั้นต่ำ 65%
 const DETECTION_INTERVAL   = 1100;   // ตรวจจับทุก ~1100ms
 const LOCK_REQUIRED_COUNT  = 3;      // ต้องเจอวัตถุเดิมกี่ครั้งก่อนล็อก
 const LOCK_DURATION        = 6000;   // ล็อกคำถามนานกี่ ms
-const UNKNOWN_CONFIDENCE_THRESHOLD = 0.20; // prediction อ่อน ๆ ก็ใช้ตำแหน่งวางคำถามได้
-const UNKNOWN_REQUIRED_COUNT = 4;          // ไม่พบวัตถุที่รู้จักกี่รอบ จึงขึ้น mystery question
 
 // ขนาดโซนกลางจอ (เปอร์เซ็นต์ของ canvas)
 const CENTER_ZONE_RATIO    = 0.45;   // 45% ของความกว้าง/สูง
@@ -1678,7 +2030,6 @@ let candidateCount  = 0;       // นับครั้งที่เจอว�
 let lockedObject    = null;    // วัตถุที่ล็อกแล้ว (แสดงคำถาม)
 let lockExpiry      = 0;       // เวลาหมดล็อก (Date.now())
 let lastQuestion    = '';      // คำถามล่าสุด (ป้องกันซ้ำ)
-let unknownNoObjectCount = 0; // นับรอบที่ไม่พบวัตถุที่รู้จัก เพื่อถามแบบ mystery object
 
 // ---- DOM references ----
 const videoEl        = document.getElementById('videoEl');
@@ -1708,6 +2059,104 @@ let lastBBoxScreen = null;   // bbox ล่าสุดใน screen space (ส�
 // NAVIGATION: สลับหน้า
 // =====================================================
 
+// =====================================================
+// iOS / iPad SPEED FIX
+// แนวคิด: ลดเวลารอหลังจากกดเริ่ม
+// 1) preload AI แบบเงียบตั้งแต่หน้าเมนู
+// 2) ตอนกดเริ่ม ให้เปิดกล้องก่อน แล้วค่อยรอ AI พร้อมบนภาพกล้อง
+// =====================================================
+let modelPromise = null;
+let preloadStarted = false;
+
+/**
+ * รอให้ TensorFlow.js และ COCO-SSD จาก CDN พร้อมใช้งาน
+ */
+async function waitForLibraries(maxWaitMs = 15000) {
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    if (window.tf && window.cocoSsd) return true;
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+}
+
+/**
+ * โหลด AI model แบบใช้ promise เดียวร่วมกัน
+ * ถ้ากำลังโหลดอยู่ จะไม่โหลดซ้ำ
+ */
+async function ensureModelReady() {
+  const libsReady = await waitForLibraries();
+  if (!libsReady) {
+    throw new Error('AI libraries are not ready');
+  }
+
+  if (model) return model;
+
+  if (!modelPromise) {
+    // lite_mobilenet_v2 เหมาะกับมือถือ/iPad และช่วยลดเวลารอได้
+    modelPromise = cocoSsd.load({ base: 'lite_mobilenet_v2' }).then(m => {
+      model = m;
+      return model;
+    });
+  }
+
+  return modelPromise;
+}
+
+/**
+ * preload AI แบบเงียบ ๆ บนหน้าเมนู
+ * เมื่อผู้ใช้กดเริ่ม กล้องจะขึ้นเร็วขึ้นมากถ้าโมเดลโหลดเสร็จแล้ว
+ */
+function startAIPreload() {
+  if (preloadStarted || model) return;
+  preloadStarted = true;
+
+  setTimeout(() => {
+    ensureModelReady().catch(err => {
+      console.warn('AI preload failed:', err);
+      preloadStarted = false;
+    });
+  }, 700);
+}
+
+/**
+ * รอให้ video พร้อมใช้งานจริงหลังได้ stream
+ */
+function waitForVideoReady() {
+  return new Promise(resolve => {
+    if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+      resolve();
+      return;
+    }
+    videoEl.onloadedmetadata = () => resolve();
+  });
+}
+
+/**
+ * เปิดกล้อง โดยลด resolution ลงนิดหนึ่งเพื่อให้ iPad/Safari เริ่มเร็วขึ้น
+ */
+async function openCameraStream() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 960 },
+        height: { ideal: 540 },
+        frameRate: { ideal: 24, max: 30 }
+      },
+      audio: false
+    });
+  } catch (err) {
+    // fallback สำหรับบางเครื่องที่ไม่ยอมรับ constraint ข้างบน
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' }
+      },
+      audio: false
+    });
+  }
+}
+
 /**
  * เริ่มกล้อง — เรียกเมื่อกดปุ่ม "เริ่มเปิดกล้อง"
  */
@@ -1716,57 +2165,50 @@ async function startCamera() {
   document.getElementById('menuPage').classList.add('hidden');
   document.getElementById('cameraPage').classList.remove('hidden');
 
-  // แสดง overlay ขณะโหลด
-  showLoadingOverlay('กำลังโหลด AI...');
-
-  // โหลด model ถ้ายังไม่ได้โหลด
-  if (!model) {
-    updateStatus('⏳ โหลด AI', '');
-    setLoadingMsg('กำลังโหลด AI (ครั้งแรกอาจใช้เวลา)...');
-    try {
-      model = await cocoSsd.load();
-    } catch (err) {
-      alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
-      goBack();
-      return;
-    }
-  }
-
-  // ขอสิทธิ์กล้อง
+  // แสดง overlay เฉพาะช่วงเปิดกล้อง ไม่รอ AI จนจอดำนาน
+  showLoadingOverlay('กำลังเปิดกล้อง...');
   updateStatus('📷 เปิดกล้อง', '');
-  setLoadingMsg('กำลังเปิดกล้อง...');
+
+  // เริ่มโหลด AI พร้อม ๆ กัน แต่ยังไม่รอ เพื่อให้กล้องขึ้นก่อน
+  const aiReadyPromise = ensureModelReady().catch(err => {
+    console.warn(err);
+    return null;
+  });
+
   try {
-    // ลองกล้องหลัง (environment) ก่อน
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width:  { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
+    stream = await openCameraStream();
   } catch (err) {
-    // ถ้าไม่ได้กล้องหลัง ลองกล้องใดก็ได้
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    } catch (err2) {
-      alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง');
-      goBack();
-      return;
-    }
+    alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง แล้วลองใหม่');
+    goBack();
+    return;
   }
 
   // ผูก stream กับ video element
   videoEl.srcObject = stream;
-  videoEl.onloadedmetadata = () => {
-    videoEl.play();
-    // ปรับ canvas ให้ตรงกับ viewport
-    resizeCanvas();
-    // ซ่อน loading overlay
-    hideLoadingOverlay();
-    // เริ่ม detection loop
-    startDetection();
-  };
+
+  try {
+    await waitForVideoReady();
+    await videoEl.play();
+  } catch (err) {
+    console.warn('video play warning:', err);
+  }
+
+  resizeCanvas();
+
+  // ซ่อนจอโหลดทันทีเมื่อกล้องขึ้นแล้ว ผู้ใช้จะเห็นภาพก่อน
+  hideLoadingOverlay();
+  updateStatus('⏳ โหลด AI', '');
+
+  // รอ AI ต่อบนภาพกล้อง ถ้า preload เสร็จแล้วจะผ่านทันที
+  const readyModel = await aiReadyPromise;
+  if (!readyModel) {
+    alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต แล้วลองเปิดหน้าเว็บใหม่');
+    goBack();
+    return;
+  }
+
+  updateStatus('🔍 สแกน', 'scanning');
+  startDetection();
 }
 
 /**
@@ -1828,41 +2270,19 @@ function startDetection() {
     drawBoxes(validPreds);
 
     if (validPreds.length === 0) {
-      // ไม่พบวัตถุที่ AI รู้จักชัดเจน
-      // แต่ยังให้ขึ้นคำถามแบบ mystery object หลังจากนิ่งอยู่สักพัก
+      // ไม่พบวัตถุ — reset candidate (แต่รักษา lock ไว้ถ้ายังไม่หมด)
+      candidateObject = null;
+      candidateCount  = 0;
+      updateLockDots(0);
 
-      // ถ้ายังล็อกคำถามเดิมอยู่ ไม่เปลี่ยนทันที
-      if (lockedObject && Date.now() < lockExpiry) {
-        updateStatus('✅ พบแล้ว', 'found');
-        return;
+      if (Date.now() >= lockExpiry) {
+        // หมด lock แล้ว ซ่อนคำถาม
+        lockedObject = null;
+        hideQuestion();
+        updateStatus('🔍 สแกน', 'scanning');
       }
-
-      // ถ้า COCO-SSD เห็นอะไรบางอย่างแบบไม่มั่นใจ ใช้ bbox นั้นช่วยวางตำแหน่งคำถาม
-      const weakPreds = predictions.filter(p => p.score >= UNKNOWN_CONFIDENCE_THRESHOLD);
-      const weakSelected = weakPreds.length > 0 ? selectCenterObject(weakPreds) : null;
-
-      unknownNoObjectCount++;
-
-      if (candidateObject === UNKNOWN_OBJECT_CLASS) {
-        candidateCount++;
-      } else {
-        candidateObject = UNKNOWN_OBJECT_CLASS;
-        candidateCount = 1;
-      }
-
-      // มี prediction อ่อน ๆ ให้ขึ้นไวขึ้น / ถ้าไม่เห็นอะไรเลยให้รอนานขึ้นนิดหนึ่ง
-      const requiredCount = weakSelected ? LOCK_REQUIRED_COUNT : UNKNOWN_REQUIRED_COUNT;
-
-      if (candidateCount >= requiredCount || unknownNoObjectCount >= UNKNOWN_REQUIRED_COUNT) {
-        lockObject(UNKNOWN_OBJECT_CLASS, weakSelected);
-        unknownNoObjectCount = 0;
-      }
-
       return;
     }
-
-    // เจอวัตถุที่รู้จักแล้ว reset ระบบ mystery object
-    unknownNoObjectCount = 0;
 
     // ---- เลือกวัตถุที่ใกล้กลางจอมากที่สุด (Center Priority) ----
     const selected = selectCenterObject(validPreds);
@@ -1914,7 +2334,6 @@ function resetDetectionState() {
   lockedObject    = null;
   lockExpiry      = 0;
   lastQuestion    = '';
-  unknownNoObjectCount = 0;
   hideQuestion();
   updateLockDots(0);
 }
@@ -2019,9 +2438,16 @@ function showQuestion(objClass, pred) {
   lastQuestion = q;
 
   // ---- 2. อัปเดตข้อความ ----
-  const isUnknownObject = objClass === UNKNOWN_OBJECT_CLASS;
-  popupObjectLabel.textContent = isUnknownObject ? 'think about this' : objClass;
+  popupObjectLabel.textContent = objClass;
   popupQuestionTxt.textContent  = q;
+
+  // ปรับขนาดตัวอักษรตามความยาวคำถามให้อ่านง่ายบนมือถือ/iPad
+  questionPopup.classList.remove('long-question', 'very-long-question');
+  if (q.length > 64) {
+    questionPopup.classList.add('very-long-question');
+  } else if (q.length > 42) {
+    questionPopup.classList.add('long-question');
+  }
 
   // ---- 3. คำนวณตำแหน่ง popup ใกล้วัตถุ ----
   positionPopup(pred);
@@ -2066,8 +2492,8 @@ function positionPopup(pred) {
   const offsetY = (ch - vh * scale) / 2;
 
   // ขนาด popup (ประมาณ — JS ไม่รู้ความสูงก่อน render)
-  const popW = Math.min(sw * 0.78, 300);
-  const popH = 160; // ประมาณ
+  const popW = Math.min(sw * 0.88, sw >= 700 ? 640 : 560);
+  const popH = Math.max(86, questionPopup.offsetHeight || 110); // ประมาณความสูงของข้อความ 3D
 
   let targetX, targetY; // จุดอ้างอิง (มุมบนซ้ายของ popup)
 
@@ -2111,11 +2537,16 @@ function positionPopup(pred) {
   targetX = Math.max(margin, Math.min(sw - popW - margin, targetX));
   targetY = Math.max(80, Math.min(sh - popH - margin, targetY));
 
+  // ปรับมุมเอียงเล็กน้อยตามตำแหน่งวัตถุ เพื่อให้เหมือนข้อความอยู่ในพื้นที่ 3D
+  const centerOffsetX = ((targetX + popW / 2) - sw / 2) / (sw / 2);
+  const centerOffsetY = ((targetY + popH / 2) - sh / 2) / (sh / 2);
+  questionPopup.style.setProperty('--tilt-x', `${Math.max(-8, Math.min(8, centerOffsetX * 6))}deg`);
+  questionPopup.style.setProperty('--tilt-y', `${Math.max(-6, Math.min(6, -centerOffsetY * 4))}deg`);
+
   // กำหนดตำแหน่ง
   questionPopup.style.left = `${targetX}px`;
   questionPopup.style.top  = `${targetY}px`;
 
-  // ---- อัปเดต connector line ----
   updateConnector(targetX, targetY, popW, popH);
 }
 
@@ -2123,24 +2554,10 @@ function positionPopup(pred) {
  * วาดเส้นเชื่อม connector จาก popup ไปยัง bounding box
  */
 function updateConnector(popX, popY, popW, popH) {
-  if (!lastBBoxScreen || !connectorLine) return;
-
-  const { cx: bx, cy: by } = lastBBoxScreen;
-
-  // จุดเริ่มจาก center-bottom ของ popup หรือ center-top
-  // เลือกด้านที่ใกล้กับ bbox มากกว่า
-  const popCX = popX + popW / 2;
-  const popCY = popY + popH / 2;
-
-  // ปลาย connector ที่ popup
-  const px = popCX;
-  const py = (by < popY) ? popY : popY + popH; // ขอบที่หันหา bbox
-
-  connectorLine.setAttribute('x1', String(px));
-  connectorLine.setAttribute('y1', String(py));
-  connectorLine.setAttribute('x2', String(bx));
-  connectorLine.setAttribute('y2', String(by));
-  connectorLine.setAttribute('opacity', '0.5');
+  // ไม่ใช้เส้นเชื่อม เพื่อให้เหลือเพียงข้อความ 3D ที่ลอยอยู่ในฉาก
+  if (connectorLine) {
+    connectorLine.setAttribute('opacity', '0');
+  }
 }
 
 /**
@@ -2149,6 +2566,7 @@ function updateConnector(popX, popY, popW, popH) {
 function hideQuestion() {
   questionPopup.classList.remove('pop-in', 'floating');
   questionPopup.style.opacity = '0';
+  questionPopup.style.transform = '';
   clearTimeout(floatTimer);
   popupVisible   = false;
   lastBBoxScreen = null;
@@ -2169,9 +2587,9 @@ function hideQuestion() {
  * @param {string} cls   - 'ready' | 'scanning' | 'found' | ''
  */
 function updateStatus(text, cls) {
-  statusBadge.textContent = text;
-  statusBadge.className = '';   // reset
-  if (cls) statusBadge.classList.add(cls);
+  // ไม่แสดงข้อความสถานะระหว่างสแกน
+  statusBadge.textContent = '';
+  statusBadge.className = '';
 }
 
 /**
@@ -2179,16 +2597,9 @@ function updateStatus(text, cls) {
  * @param {number} count - 0-3
  */
 function updateLockDots(count) {
-  // แสดง indicator เฉพาะเมื่อกำลังนับ
-  if (count > 0 && count < LOCK_REQUIRED_COUNT) {
-    lockIndicator.classList.add('visible');
-    dots.forEach((d, i) => {
-      d.classList.toggle('active', i < count);
-    });
-  } else {
-    lockIndicator.classList.remove('visible');
-    dots.forEach(d => d.classList.remove('active'));
-  }
+  // ไม่แสดงจุดนับระหว่างสแกน เพื่อให้ UI สะอาดเหมือน AR
+  lockIndicator.classList.remove('visible');
+  dots.forEach(d => d.classList.remove('active'));
 }
 
 // =====================================================
@@ -2212,62 +2623,9 @@ window.addEventListener('resize', () => {
  * @param {Array} predictions
  */
 function drawBoxes(predictions) {
+  // ไม่วาดกรอบหรือ label ใด ๆ เพื่อให้หน้ากล้องดูเป็น AR จริงมากขึ้น
+  // ยังใช้ AI detection อยู่เหมือนเดิม แค่ไม่แสดงผลกรอบบนจอ
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (!predictions || predictions.length === 0) return;
-
-  const vw = videoEl.videoWidth   || 1;
-  const vh = videoEl.videoHeight  || 1;
-  const cw = canvas.width;
-  const ch = canvas.height;
-
-  // คำนวณ scale และ offset สำหรับ object-fit: cover
-  // (วิดีโออาจถูก crop เพื่อเต็มจอ)
-  const scaleX = cw / vw;
-  const scaleY = ch / vh;
-  const scale  = Math.max(scaleX, scaleY);   // cover = ใช้ scale ที่ใหญ่กว่า
-
-  const offsetX = (cw - vw * scale) / 2;
-  const offsetY = (ch - vh * scale) / 2;
-
-  // เลือกวัตถุกลางจอสำหรับ highlight
-  const selected = selectCenterObject(predictions);
-
-  predictions.forEach(pred => {
-    const [x, y, w, h] = pred.bbox;
-    const isSelected = (pred === selected);
-
-    // แปลง coordinate จาก video space → canvas space
-    const rx = x * scale + offsetX;
-    const ry = y * scale + offsetY;
-    const rw = w * scale;
-    const rh = h * scale;
-
-    // เลือกสี: วัตถุที่เลือก = เขียวสว่าง, อื่นๆ = โปร่งแสง
-    const color = isSelected ? '#00ffe0' : 'rgba(255,255,255,0.35)';
-    const lw    = isSelected ? 2.5 : 1.5;
-
-    // วาดกรอบ
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = lw;
-    ctx.shadowColor = isSelected ? 'rgba(0,255,224,0.6)' : 'transparent';
-    ctx.shadowBlur  = isSelected ? 8 : 0;
-    ctx.strokeRect(rx, ry, rw, rh);
-
-    // วาด label บน bounding box
-    const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
-    ctx.font         = `bold ${isSelected ? 14 : 12}px Prompt, sans-serif`;
-    ctx.fillStyle    = color;
-    ctx.shadowColor  = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur   = 4;
-
-    const textY = ry > 24 ? ry - 8 : ry + rh + 18;
-    ctx.fillText(label, rx + 4, textY);
-
-    // reset shadow
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
-  });
 }
 
 // =====================================================
@@ -2301,7 +2659,8 @@ window.addEventListener('load', () => {
   // ซ่อน loading overlay หลังจาก DOM พร้อม
   setTimeout(() => {
     hideLoadingOverlay();
-    // ซ่อน loading overlay ไว้ ให้แสดงเฉพาะตอนเปิดกล้อง
+    // เริ่ม preload AI แบบเงียบ ๆ เพื่อให้ตอนกดเริ่มบน iPad เร็วขึ้น
+    startAIPreload();
   }, 800);
 });
 
