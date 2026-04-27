@@ -385,279 +385,210 @@
       letter-spacing: 0.5px;
     }
 
-    /* ---- 3D AR Question Popup: ลอยแบบ AR เหมือนวัตถุ 3D ---- */
+    /* ---- 3D AR Question Popup ---- */
 
-    /* Keyframe: เด้งขึ้นมาจากพื้น/วัตถุ ให้รู้สึกเหมือนโผล่ออกมาจากจอ */
+    /* Keyframe: เด้งเข้า 3D */
     @keyframes popIn3D {
       0% {
         opacity: 0;
-        transform:
-          translate3d(0, 74px, -240px)
-          rotateX(58deg)
-          rotateY(var(--tilt-y, 0deg))
-          scale(0.28);
-        filter: blur(12px) saturate(0.7);
+        transform: perspective(600px) rotateX(25deg) scale(0.55) translateY(30px);
+        filter: blur(6px);
       }
-      45% {
+      60% {
         opacity: 1;
-        transform:
-          translate3d(0, -18px, 88px)
-          rotateX(-10deg)
-          rotateY(calc(var(--tilt-y, 0deg) * 0.75))
-          scale(1.10);
-        filter: blur(0) saturate(1.25);
+        transform: perspective(600px) rotateX(-4deg) scale(1.04) translateY(-4px);
+        filter: blur(0);
       }
-      70% {
-        transform:
-          translate3d(0, 8px, 28px)
-          rotateX(4deg)
-          rotateY(calc(var(--tilt-y, 0deg) * 0.45))
-          scale(0.98);
+      80% {
+        transform: perspective(600px) rotateX(2deg) scale(0.98) translateY(2px);
       }
       100% {
         opacity: 1;
-        transform:
-          translate3d(0, 0, 42px)
-          rotateX(var(--tilt-x, -5deg))
-          rotateY(var(--tilt-y, 0deg))
-          scale(1);
-        filter: blur(0) saturate(1.1);
+        transform: perspective(600px) rotateX(0deg) scale(1) translateY(0);
+        filter: blur(0);
       }
     }
 
-    /* Keyframe: ลอยนิ่ง ๆ หลังเด้งเข้า */
+    /* Keyframe: floating เบาๆ หลังเด้งเข้า */
     @keyframes floatAR {
-      0%, 100% {
-        transform:
-          translate3d(0, 0px, 42px)
-          rotateX(var(--tilt-x, -5deg))
-          rotateY(var(--tilt-y, 0deg))
-          scale(1);
-      }
-      50% {
-        transform:
-          translate3d(0, -9px, 58px)
-          rotateX(calc(var(--tilt-x, -5deg) - 1deg))
-          rotateY(calc(var(--tilt-y, 0deg) + 1.5deg))
-          scale(1.015);
-      }
+      0%, 100% { transform: perspective(600px) translateY(0px) rotateX(0deg); }
+      33%       { transform: perspective(600px) translateY(-5px) rotateX(1.5deg); }
+      66%       { transform: perspective(600px) translateY(-2px) rotateX(-1deg); }
     }
 
+    /* Keyframe: เส้นแสงเลื่อน (shimmer) */
     @keyframes shimmer {
-      0%   { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
-      20%  { opacity: 0.55; }
-      100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+      0%   { left: -100%; }
+      100% { left: 200%; }
     }
 
+    /* Keyframe: glow pulse */
     @keyframes glowPulse {
-      0%, 100% { filter: drop-shadow(0 0 18px rgba(0,255,224,0.20)); }
-      50%      { filter: drop-shadow(0 0 34px rgba(0,255,224,0.42)); }
+      0%, 100% { box-shadow:
+        0 0 0 1px rgba(0,255,224,0.30),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 40px rgba(0,255,224,0.10),
+        0 2px 0 rgba(255,255,255,0.08) inset; }
+      50% { box-shadow:
+        0 0 0 1px rgba(0,255,224,0.55),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 60px rgba(0,255,224,0.22),
+        0 2px 0 rgba(255,255,255,0.08) inset; }
     }
 
-    @keyframes floorPulse {
-      0%, 100% { opacity: 0.36; transform: translateX(-50%) rotateX(72deg) scale(0.92); }
-      50%      { opacity: 0.58; transform: translateX(-50%) rotateX(72deg) scale(1.08); }
-    }
-
+    /* Keyframe: จุดกระพริบ */
     @keyframes dotBlink {
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.25; }
     }
 
-    /* wrapper ใช้ perspective เพื่อให้ popup มีมิติแบบ AR จริงขึ้น */
+    /* wrapper: วาง popup ในตำแหน่ง absolute บนหน้าจอ */
     #arPopupWrapper {
       position: fixed;
       inset: 0;
-      z-index: 10;
+      z-index: 10;          /* เหนือ canvas และ ar-ui ทั้งหมด */
       pointer-events: none;
-      perspective: 900px;
-      perspective-origin: 50% 55%;
-      transform-style: preserve-3d;
     }
 
-    #popupConnector {
-      position: absolute;
-      pointer-events: none;
-      z-index: 9;
-      filter: drop-shadow(0 0 8px rgba(0,255,224,0.45));
-    }
-
-    /* ตัว popup หลัก: ไม่ใช่กล่องแบน แต่เป็นวัตถุ 3D ที่มีหน้า/ความหนา/เงาพื้น */
+    /* ตัว popup หลัก */
     #questionPopup {
+      /* ตำแหน่งเริ่มต้น (จะถูก JS กำหนดด้วย left/top) */
       position: absolute;
-      width: min(84vw, 360px);
-      min-height: 150px;
+      width: min(78vw, 300px);
+
+      /* 3D glass morphism */
+      background:
+        linear-gradient(145deg,
+          rgba(8,8,20,0.82) 0%,
+          rgba(0,30,30,0.78) 50%,
+          rgba(8,8,20,0.82) 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(0,255,224,0.28);
+      padding: 18px 20px 16px;
+
+      /* เงา + glow */
+      box-shadow:
+        0 0 0 1px rgba(0,255,224,0.30),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 40px rgba(0,255,224,0.10),
+        0 2px 0 rgba(255,255,255,0.08) inset;
+
+      /* blur พื้นหลัง */
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+      /* perspective base */
+      transform-origin: center bottom;
+
+      /* ซ่อนก่อน */
       opacity: 0;
       pointer-events: none;
-      overflow: visible;
-      transform-style: preserve-3d;
-      transform-origin: 50% 86%;
-      --tilt-x: -5deg;
-      --tilt-y: 0deg;
-      --popup-depth: 30px;
+      overflow: hidden;
     }
 
-    /* เงาวงรีด้านล่าง ทำให้ดูเหมือน popup ลอยเหนือวัตถุ */
+    /* เส้นแสงบน */
     #questionPopup::before {
       content: '';
       position: absolute;
-      left: 50%;
-      bottom: -48px;
-      width: 72%;
-      height: 42px;
-      border-radius: 50%;
-      background:
-        radial-gradient(ellipse at center,
-          rgba(0,255,224,0.42) 0%,
-          rgba(0,255,224,0.20) 38%,
-          rgba(0,255,224,0.04) 70%,
-          transparent 100%);
-      transform: translateX(-50%) rotateX(72deg);
-      filter: blur(6px);
-      z-index: -4;
-      animation: floorPulse 3.2s ease-in-out infinite;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0,255,224,0.9) 50%,
+        transparent 100%);
+      opacity: 0.7;
     }
 
-    /* ความหนาด้านหลังของการ์ด */
+    /* shimmer layer */
     #questionPopup::after {
       content: '';
       position: absolute;
-      inset: 14px -9px -12px 11px;
-      border-radius: 25px;
-      background:
-        linear-gradient(135deg,
-          rgba(0,91,92,0.86),
-          rgba(0,255,224,0.24) 44%,
-          rgba(0,18,28,0.92));
-      border: 1px solid rgba(0,255,224,0.18);
-      transform: translateZ(calc(var(--popup-depth) * -1));
-      box-shadow:
-        0 28px 60px rgba(0,0,0,0.62),
-        0 0 42px rgba(0,255,224,0.12);
-      z-index: -2;
-    }
-
-    .popup-face {
-      position: relative;
-      padding: 18px 20px 16px;
-      min-height: 150px;
-      border-radius: 24px;
-      overflow: hidden;
-      transform: translateZ(var(--popup-depth));
-      background:
-        linear-gradient(145deg,
-          rgba(255,255,255,0.18) 0%,
-          rgba(9,24,36,0.82) 32%,
-          rgba(0,46,49,0.80) 68%,
-          rgba(8,8,20,0.90) 100%);
-      border: 1px solid rgba(255,255,255,0.28);
-      box-shadow:
-        0 0 0 1px rgba(0,255,224,0.25),
-        0 16px 42px rgba(0,0,0,0.50),
-        0 0 54px rgba(0,255,224,0.18),
-        inset 0 1px 0 rgba(255,255,255,0.35),
-        inset -16px -18px 36px rgba(0,0,0,0.35);
-      backdrop-filter: blur(18px) saturate(180%);
-      -webkit-backdrop-filter: blur(18px) saturate(180%);
-    }
-
-    .popup-face::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background:
-        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.23) 50%, transparent 100%);
-      transform: translateX(-140%) skewX(-18deg);
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(105deg,
+        transparent 0%,
+        rgba(255,255,255,0.06) 50%,
+        transparent 100%);
       pointer-events: none;
     }
 
+    /* state: แสดง — เด้งเข้าแล้ว float */
     #questionPopup.pop-in {
       opacity: 1;
       animation:
-        popIn3D 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-        glowPulse 2.6s ease-in-out 0.9s infinite;
+        popIn3D 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards,
+        glowPulse 2.5s ease-in-out 0.6s infinite;
     }
 
-    #questionPopup.pop-in .popup-face::before {
-      animation: shimmer 1.6s ease 0.35s forwards;
+    #questionPopup.pop-in::after {
+      animation: shimmer 1.8s ease 0.5s forwards;
     }
 
+    /* float หลัง pop เข้า */
     #questionPopup.floating {
-      opacity: 1;
       animation:
-        floatAR 4.2s ease-in-out infinite,
-        glowPulse 2.8s ease-in-out infinite;
+        floatAR 4s ease-in-out infinite,
+        glowPulse 2.5s ease-in-out infinite;
     }
 
+    /* แท็กชื่อวัตถุ */
     .popup-object-tag {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: rgba(0,255,224,0.13);
-      border: 1px solid rgba(0,255,224,0.38);
-      border-radius: 999px;
-      padding: 5px 12px 5px 9px;
+      gap: 6px;
+      background: rgba(0,255,224,0.10);
+      border: 1px solid rgba(0,255,224,0.30);
+      border-radius: 100px;
+      padding: 4px 11px 4px 8px;
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--accent);
-      letter-spacing: 0.9px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
-      margin-bottom: 12px;
-      box-shadow:
-        0 0 12px rgba(0,255,224,0.16),
-        inset 0 1px 0 rgba(255,255,255,0.18);
-      transform: translateZ(46px);
+      margin-bottom: 11px;
     }
 
     .popup-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 9px rgba(0,255,224,0.95);
+      box-shadow: 0 0 6px rgba(0,255,224,0.8);
       animation: dotBlink 1.4s ease-in-out infinite;
       flex-shrink: 0;
     }
 
+    /* ข้อความคำถามหลัก */
     #popupQuestionText {
-      position: relative;
-      font-size: clamp(20px, 5.2vw, 30px);
-      font-weight: 800;
-      line-height: 1.25;
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.45;
       color: #fff;
-      letter-spacing: -0.2px;
-      transform: translateZ(62px);
-      text-shadow:
-        0 1px 0 rgba(0,255,224,0.48),
-        0 2px 0 rgba(0,125,128,0.40),
-        0 3px 0 rgba(0,65,72,0.34),
-        0 9px 16px rgba(0,0,0,0.72),
-        0 0 18px rgba(0,255,224,0.20);
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      letter-spacing: 0.1px;
     }
 
+    /* เส้นล่าง + hint */
     .popup-divider {
-      margin: 13px 0 9px;
+      margin: 12px 0 8px;
       height: 1px;
       background: linear-gradient(90deg,
-        rgba(0,255,224,0.38) 0%,
-        rgba(255,255,255,0.18) 38%,
+        rgba(0,255,224,0.2) 0%,
         transparent 100%);
-      transform: translateZ(40px);
     }
 
     .popup-hint {
       font-size: 11px;
-      color: rgba(255,255,255,0.48);
-      font-weight: 500;
-      transform: translateZ(44px);
+      color: rgba(255,255,255,0.28);
+      font-weight: 400;
     }
 
-    /* มือถือจอเล็ก: ลดขนาดเล็กน้อยเพื่อไม่บังกล้องมากเกินไป */
-    @media (max-width: 380px) {
-      #questionPopup { width: min(88vw, 330px); }
-      .popup-face { padding: 16px 17px 14px; }
-      #popupQuestionText { font-size: clamp(19px, 5.1vw, 25px); }
+    /* เส้นเชื่อมจาก popup ไปยัง bounding box (connector line) */
+    #popupConnector {
+      position: absolute;
+      pointer-events: none;
+      z-index: 9;
     }
 
     /* ===== ตัวนับ confidence / lock indicator ===== */
@@ -742,6 +673,159 @@
     @media (min-width: 500px) {
       .menu-inner { max-width: 420px; }
     }
+
+
+    /* ===================================================
+       AR REALISM OVERRIDES: Text-only 3D popup, no scan UI
+       - ไม่มีกล่องพื้นหลัง popup
+       - ไม่มีกรอบสแกน / bounding box / status สแกน
+       - เหลือเฉพาะข้อความ 3D ลอยบนกล้อง
+    =================================================== */
+
+    .ar-topbar {
+      justify-content: flex-start !important;
+      background: transparent !important;
+      padding: 12px 14px !important;
+      padding-top: max(12px, env(safe-area-inset-top)) !important;
+    }
+
+    .btn-back {
+      background: rgba(0,0,0,0.28) !important;
+      border: 0 !important;
+      color: rgba(255,255,255,0.82) !important;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.20) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+
+    .ar-brand,
+    #statusBadge,
+    .center-guide,
+    #lockIndicator,
+    #popupConnector,
+    .popup-divider,
+    .popup-hint {
+      display: none !important;
+    }
+
+    #overlayCanvas {
+      opacity: 0 !important;
+    }
+
+    #arPopupWrapper {
+      z-index: 20 !important;
+      perspective: 1000px;
+    }
+
+    #questionPopup {
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      width: min(88vw, 460px) !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
+      text-align: center !important;
+      transform-style: preserve-3d;
+      transform-origin: center center !important;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.50));
+    }
+
+    #questionPopup::before,
+    #questionPopup::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .popup-object-tag {
+      width: 100%;
+      display: flex !important;
+      justify-content: center;
+      align-items: center;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      margin: 0 0 8px !important;
+      color: #00ffe0 !important;
+      font-family: var(--font-en);
+      font-size: clamp(13px, 3.2vw, 18px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.8px !important;
+      text-transform: uppercase;
+      text-shadow:
+        0 1px 0 #008f83,
+        0 2px 0 #006f68,
+        0 5px 10px rgba(0,0,0,0.55),
+        0 0 18px rgba(0,255,224,0.55);
+    }
+
+    .popup-dot {
+      display: none !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-en), var(--font-th), sans-serif;
+      font-size: clamp(25px, 7.2vw, 46px) !important;
+      font-weight: 800 !important;
+      line-height: 1.08 !important;
+      letter-spacing: -0.5px !important;
+      color: #ffffff !important;
+      -webkit-text-stroke: 1px rgba(0,0,0,0.55);
+      paint-order: stroke fill;
+      text-shadow:
+        0 1px 0 #d8f7ff,
+        0 2px 0 #b7eaf4,
+        0 3px 0 #87d9e5,
+        0 4px 0 #42baca,
+        0 5px 0 #1299a8,
+        0 9px 8px rgba(0,0,0,0.50),
+        0 16px 22px rgba(0,0,0,0.45),
+        0 0 22px rgba(0,255,224,0.35);
+      transform: translateZ(36px);
+    }
+
+    #questionPopup.pop-in {
+      opacity: 1 !important;
+      animation: arTextPop 0.72s cubic-bezier(0.22, 1.35, 0.28, 1) forwards !important;
+    }
+
+    #questionPopup.floating {
+      opacity: 1 !important;
+      animation: arTextFloat 4.2s ease-in-out infinite !important;
+    }
+
+    @keyframes arTextPop {
+      0% {
+        opacity: 0;
+        transform: perspective(900px) translateZ(-220px) translateY(32px) rotateX(calc(var(--tilt-y) + 24deg)) rotateY(calc(var(--tilt-x) * 1.2)) scale(0.42);
+        filter: blur(8px) drop-shadow(0 26px 20px rgba(0,0,0,0.10));
+      }
+      58% {
+        opacity: 1;
+        transform: perspective(900px) translateZ(72px) translateY(-8px) rotateX(calc(var(--tilt-y) - 4deg)) rotateY(var(--tilt-x)) scale(1.08);
+        filter: blur(0) drop-shadow(0 24px 20px rgba(0,0,0,0.52));
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(900px) translateZ(36px) translateY(0) rotateX(var(--tilt-y)) rotateY(var(--tilt-x)) scale(1);
+        filter: blur(0) drop-shadow(0 18px 18px rgba(0,0,0,0.50));
+      }
+    }
+
+    @keyframes arTextFloat {
+      0%, 100% {
+        transform: perspective(900px) translateZ(36px) translateY(0) rotateX(var(--tilt-y)) rotateY(var(--tilt-x)) scale(1);
+      }
+      50% {
+        transform: perspective(900px) translateZ(48px) translateY(-8px) rotateX(calc(var(--tilt-y) + 1deg)) rotateY(calc(var(--tilt-x) - 1deg)) scale(1.015);
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -860,32 +944,23 @@
     <line id="connectorLine"
           x1="0" y1="0" x2="0" y2="0"
           stroke="url(#lineGrad)"
-          stroke-width="2.2"
-          stroke-dasharray="6 7"
-          stroke-linecap="round"
+          stroke-width="1.5"
+          stroke-dasharray="4 4"
           opacity="0" />
-    <circle id="connectorTarget"
-            cx="0" cy="0" r="0"
-            fill="none"
-            stroke="rgba(0,255,224,0.85)"
-            stroke-width="2"
-            opacity="0" />
   </svg>
 
-  <!-- Popup หลัก: ทำเป็นวัตถุ 3D มีหน้า card + ความหนา + เงาพื้น -->
+  <!-- Popup หลัก -->
   <div id="questionPopup">
-    <div class="popup-face">
-      <!-- แท็กชื่อวัตถุ -->
-      <div class="popup-object-tag" id="popupObjectTag">
-        <div class="popup-dot"></div>
-        <span id="popupObjectLabel">object</span>
-      </div>
-      <!-- คำถามหลัก -->
-      <div id="popupQuestionText">Question text here</div>
-      <!-- divider + hint -->
-      <div class="popup-divider"></div>
-      <div class="popup-hint">💭 Floating AR question</div>
+    <!-- แท็กชื่อวัตถุ -->
+    <div class="popup-object-tag" id="popupObjectTag">
+      <div class="popup-dot"></div>
+      <span id="popupObjectLabel">object</span>
     </div>
+    <!-- คำถามหลัก -->
+    <div id="popupQuestionText">Question text here</div>
+    <!-- divider + hint -->
+    <div class="popup-divider"></div>
+    <div class="popup-hint">💭 Think about your answer</div>
   </div>
 </div>
 
@@ -1770,7 +1845,6 @@ const popupObjectTag   = document.getElementById('popupObjectTag');
 const popupObjectLabel = document.getElementById('popupObjectLabel');
 const popupQuestionTxt = document.getElementById('popupQuestionText');
 const connectorLine    = document.getElementById('connectorLine');
-const connectorTarget  = document.getElementById('connectorTarget');
 
 // ---- Popup state ----
 let floatTimer     = null;   // timeout เพื่อสลับจาก pop-in → floating
@@ -1781,6 +1855,104 @@ let lastBBoxScreen = null;   // bbox ล่าสุดใน screen space (ส�
 // NAVIGATION: สลับหน้า
 // =====================================================
 
+// =====================================================
+// iOS / iPad SPEED FIX
+// แนวคิด: ลดเวลารอหลังจากกดเริ่ม
+// 1) preload AI แบบเงียบตั้งแต่หน้าเมนู
+// 2) ตอนกดเริ่ม ให้เปิดกล้องก่อน แล้วค่อยรอ AI พร้อมบนภาพกล้อง
+// =====================================================
+let modelPromise = null;
+let preloadStarted = false;
+
+/**
+ * รอให้ TensorFlow.js และ COCO-SSD จาก CDN พร้อมใช้งาน
+ */
+async function waitForLibraries(maxWaitMs = 15000) {
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    if (window.tf && window.cocoSsd) return true;
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+}
+
+/**
+ * โหลด AI model แบบใช้ promise เดียวร่วมกัน
+ * ถ้ากำลังโหลดอยู่ จะไม่โหลดซ้ำ
+ */
+async function ensureModelReady() {
+  const libsReady = await waitForLibraries();
+  if (!libsReady) {
+    throw new Error('AI libraries are not ready');
+  }
+
+  if (model) return model;
+
+  if (!modelPromise) {
+    // lite_mobilenet_v2 เหมาะกับมือถือ/iPad และช่วยลดเวลารอได้
+    modelPromise = cocoSsd.load({ base: 'lite_mobilenet_v2' }).then(m => {
+      model = m;
+      return model;
+    });
+  }
+
+  return modelPromise;
+}
+
+/**
+ * preload AI แบบเงียบ ๆ บนหน้าเมนู
+ * เมื่อผู้ใช้กดเริ่ม กล้องจะขึ้นเร็วขึ้นมากถ้าโมเดลโหลดเสร็จแล้ว
+ */
+function startAIPreload() {
+  if (preloadStarted || model) return;
+  preloadStarted = true;
+
+  setTimeout(() => {
+    ensureModelReady().catch(err => {
+      console.warn('AI preload failed:', err);
+      preloadStarted = false;
+    });
+  }, 700);
+}
+
+/**
+ * รอให้ video พร้อมใช้งานจริงหลังได้ stream
+ */
+function waitForVideoReady() {
+  return new Promise(resolve => {
+    if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+      resolve();
+      return;
+    }
+    videoEl.onloadedmetadata = () => resolve();
+  });
+}
+
+/**
+ * เปิดกล้อง โดยลด resolution ลงนิดหนึ่งเพื่อให้ iPad/Safari เริ่มเร็วขึ้น
+ */
+async function openCameraStream() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 960 },
+        height: { ideal: 540 },
+        frameRate: { ideal: 24, max: 30 }
+      },
+      audio: false
+    });
+  } catch (err) {
+    // fallback สำหรับบางเครื่องที่ไม่ยอมรับ constraint ข้างบน
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' }
+      },
+      audio: false
+    });
+  }
+}
+
 /**
  * เริ่มกล้อง — เรียกเมื่อกดปุ่ม "เริ่มเปิดกล้อง"
  */
@@ -1789,57 +1961,50 @@ async function startCamera() {
   document.getElementById('menuPage').classList.add('hidden');
   document.getElementById('cameraPage').classList.remove('hidden');
 
-  // แสดง overlay ขณะโหลด
-  showLoadingOverlay('กำลังโหลด AI...');
-
-  // โหลด model ถ้ายังไม่ได้โหลด
-  if (!model) {
-    updateStatus('⏳ โหลด AI', '');
-    setLoadingMsg('กำลังโหลด AI (ครั้งแรกอาจใช้เวลา)...');
-    try {
-      model = await cocoSsd.load();
-    } catch (err) {
-      alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
-      goBack();
-      return;
-    }
-  }
-
-  // ขอสิทธิ์กล้อง
+  // แสดง overlay เฉพาะช่วงเปิดกล้อง ไม่รอ AI จนจอดำนาน
+  showLoadingOverlay('กำลังเปิดกล้อง...');
   updateStatus('📷 เปิดกล้อง', '');
-  setLoadingMsg('กำลังเปิดกล้อง...');
+
+  // เริ่มโหลด AI พร้อม ๆ กัน แต่ยังไม่รอ เพื่อให้กล้องขึ้นก่อน
+  const aiReadyPromise = ensureModelReady().catch(err => {
+    console.warn(err);
+    return null;
+  });
+
   try {
-    // ลองกล้องหลัง (environment) ก่อน
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width:  { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
+    stream = await openCameraStream();
   } catch (err) {
-    // ถ้าไม่ได้กล้องหลัง ลองกล้องใดก็ได้
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    } catch (err2) {
-      alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง');
-      goBack();
-      return;
-    }
+    alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง แล้วลองใหม่');
+    goBack();
+    return;
   }
 
   // ผูก stream กับ video element
   videoEl.srcObject = stream;
-  videoEl.onloadedmetadata = () => {
-    videoEl.play();
-    // ปรับ canvas ให้ตรงกับ viewport
-    resizeCanvas();
-    // ซ่อน loading overlay
-    hideLoadingOverlay();
-    // เริ่ม detection loop
-    startDetection();
-  };
+
+  try {
+    await waitForVideoReady();
+    await videoEl.play();
+  } catch (err) {
+    console.warn('video play warning:', err);
+  }
+
+  resizeCanvas();
+
+  // ซ่อนจอโหลดทันทีเมื่อกล้องขึ้นแล้ว ผู้ใช้จะเห็นภาพก่อน
+  hideLoadingOverlay();
+  updateStatus('⏳ โหลด AI', '');
+
+  // รอ AI ต่อบนภาพกล้อง ถ้า preload เสร็จแล้วจะผ่านทันที
+  const readyModel = await aiReadyPromise;
+  if (!readyModel) {
+    alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต แล้วลองเปิดหน้าเว็บใหม่');
+    goBack();
+    return;
+  }
+
+  updateStatus('🔍 สแกน', 'scanning');
+  startDetection();
 }
 
 /**
@@ -2078,7 +2243,6 @@ function showQuestion(objClass, pred) {
   // ---- 4. เริ่ม animation pop-in ----
   // reset ก่อน (ในกรณีที่แสดงอยู่แล้ว)
   questionPopup.classList.remove('pop-in', 'floating');
-  questionPopup.style.opacity = '';
   // force reflow
   void questionPopup.offsetWidth;
   questionPopup.classList.add('pop-in');
@@ -2091,7 +2255,7 @@ function showQuestion(objClass, pred) {
       questionPopup.classList.remove('pop-in');
       questionPopup.classList.add('floating');
     }
-  }, 900);
+  }, 600);
 }
 
 /**
@@ -2115,16 +2279,11 @@ function positionPopup(pred) {
   const offsetX = (cw - vw * scale) / 2;
   const offsetY = (ch - vh * scale) / 2;
 
-  // ขนาด popup ให้ตรงกับ CSS ใหม่
-  const popW = Math.min(sw * 0.84, 360);
+  // ขนาด popup (ประมาณ — JS ไม่รู้ความสูงก่อน render)
+  const popW = Math.min(sw * 0.88, 460);
+  const popH = Math.max(130, questionPopup.offsetHeight || 170); // ประมาณความสูงของข้อความ 3D
 
-  // ให้ browser คำนวณความสูงจริงก่อน เพื่อ clamp ได้แม่นขึ้น
-  questionPopup.style.width = `${popW}px`;
-  const measured = questionPopup.getBoundingClientRect();
-  const popH = Math.max(measured.height || 150, 150);
-
-  let targetX, targetY;
-  let appearsAbove = true;
+  let targetX, targetY; // จุดอ้างอิง (มุมบนซ้ายของ popup)
 
   if (pred && pred.bbox) {
     const [bx, by, bw, bh] = pred.bbox;
@@ -2135,41 +2294,44 @@ function positionPopup(pred) {
     const rw = bw * scale;
     const rh = bh * scale;
 
+    // center ของ bounding box
     const cx = rx + rw / 2;
     const cy = ry + rh / 2;
+
+    // บันทึก bbox screen สำหรับ connector
     lastBBoxScreen = { cx, cy, rx, ry, rw, rh };
 
-    // วาง popup ให้เหมือนลอยออกมาจากวัตถุ:
-    // เหนือวัตถุก่อน ถ้าไม่พอค่อยย้ายไปใต้
-    const gap = 34;
-    const above = ry - popH - gap;
-    if (above > 92) {
+    // วาง popup เหนือวัตถุ ถ้าพื้นที่ไม่พอ → วางใต้
+    const above = ry - popH - 24;
+    if (above > 80) {
+      // เหนือวัตถุ
       targetY = above;
-      appearsAbove = true;
     } else {
-      targetY = ry + rh + gap;
-      appearsAbove = false;
+      // ใต้วัตถุ
+      targetY = ry + rh + 24;
     }
 
+    // จัดกึ่งกลางแนวนอนกับ bbox
     targetX = cx - popW / 2;
   } else {
+    // fallback: กลางจอ
     targetX = (sw - popW) / 2;
-    targetY = sh * 0.26;
+    targetY = sh * 0.28;
     lastBBoxScreen = null;
   }
 
-  // clamp ไม่ให้ popup หลุดขอบจอ
+  // ---- clamp ไม่ให้หลุดจอ ----
   const margin = 14;
   targetX = Math.max(margin, Math.min(sw - popW - margin, targetX));
-  targetY = Math.max(86, Math.min(sh - popH - margin, targetY));
+  targetY = Math.max(80, Math.min(sh - popH - margin, targetY));
 
-  // เอียงตามตำแหน่งบนจอ เพื่อให้เหมือนวัตถุ AR หันเข้าหาผู้ใช้
-  const popupCenterX = targetX + popW / 2;
-  const tiltY = ((popupCenterX - sw / 2) / sw) * -18;  // ซ้าย/ขวา
-  const tiltX = appearsAbove ? -7 : 7;                 // อยู่เหนือ/ใต้ object
-  questionPopup.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
-  questionPopup.style.setProperty('--tilt-x', `${tiltX}deg`);
+  // ปรับมุมเอียงเล็กน้อยตามตำแหน่งวัตถุ เพื่อให้เหมือนข้อความอยู่ในพื้นที่ 3D
+  const centerOffsetX = ((targetX + popW / 2) - sw / 2) / (sw / 2);
+  const centerOffsetY = ((targetY + popH / 2) - sh / 2) / (sh / 2);
+  questionPopup.style.setProperty('--tilt-x', `${Math.max(-8, Math.min(8, centerOffsetX * 6))}deg`);
+  questionPopup.style.setProperty('--tilt-y', `${Math.max(-6, Math.min(6, -centerOffsetY * 4))}deg`);
 
+  // กำหนดตำแหน่ง
   questionPopup.style.left = `${targetX}px`;
   questionPopup.style.top  = `${targetY}px`;
 
@@ -2180,26 +2342,9 @@ function positionPopup(pred) {
  * วาดเส้นเชื่อม connector จาก popup ไปยัง bounding box
  */
 function updateConnector(popX, popY, popW, popH) {
-  if (!lastBBoxScreen || !connectorLine) return;
-
-  const { cx: bx, cy: by } = lastBBoxScreen;
-  const popCX = popX + popW / 2;
-
-  // เลือกขอบของ popup ที่ใกล้วัตถุที่สุด
-  const py = (by < popY) ? popY : popY + popH;
-
-  connectorLine.setAttribute('x1', String(popCX));
-  connectorLine.setAttribute('y1', String(py));
-  connectorLine.setAttribute('x2', String(bx));
-  connectorLine.setAttribute('y2', String(by));
-  connectorLine.setAttribute('opacity', '0.72');
-
-  // วงแหวนเล็กที่จุด anchor ทำให้เหมือน AR pin เกาะกับวัตถุ
-  if (connectorTarget) {
-    connectorTarget.setAttribute('cx', String(bx));
-    connectorTarget.setAttribute('cy', String(by));
-    connectorTarget.setAttribute('r', '10');
-    connectorTarget.setAttribute('opacity', '0.85');
+  // ไม่ใช้เส้นเชื่อม เพื่อให้เหลือเพียงข้อความ 3D ที่ลอยอยู่ในฉาก
+  if (connectorLine) {
+    connectorLine.setAttribute('opacity', '0');
   }
 }
 
@@ -2209,6 +2354,7 @@ function updateConnector(popX, popY, popW, popH) {
 function hideQuestion() {
   questionPopup.classList.remove('pop-in', 'floating');
   questionPopup.style.opacity = '0';
+  questionPopup.style.transform = '';
   clearTimeout(floatTimer);
   popupVisible   = false;
   lastBBoxScreen = null;
@@ -2216,10 +2362,6 @@ function hideQuestion() {
   // ซ่อน connector
   if (connectorLine) {
     connectorLine.setAttribute('opacity', '0');
-  }
-  if (connectorTarget) {
-    connectorTarget.setAttribute('opacity', '0');
-    connectorTarget.setAttribute('r', '0');
   }
 }
 
@@ -2233,9 +2375,9 @@ function hideQuestion() {
  * @param {string} cls   - 'ready' | 'scanning' | 'found' | ''
  */
 function updateStatus(text, cls) {
-  statusBadge.textContent = text;
-  statusBadge.className = '';   // reset
-  if (cls) statusBadge.classList.add(cls);
+  // ไม่แสดงข้อความสถานะระหว่างสแกน
+  statusBadge.textContent = '';
+  statusBadge.className = '';
 }
 
 /**
@@ -2243,16 +2385,9 @@ function updateStatus(text, cls) {
  * @param {number} count - 0-3
  */
 function updateLockDots(count) {
-  // แสดง indicator เฉพาะเมื่อกำลังนับ
-  if (count > 0 && count < LOCK_REQUIRED_COUNT) {
-    lockIndicator.classList.add('visible');
-    dots.forEach((d, i) => {
-      d.classList.toggle('active', i < count);
-    });
-  } else {
-    lockIndicator.classList.remove('visible');
-    dots.forEach(d => d.classList.remove('active'));
-  }
+  // ไม่แสดงจุดนับระหว่างสแกน เพื่อให้ UI สะอาดเหมือน AR
+  lockIndicator.classList.remove('visible');
+  dots.forEach(d => d.classList.remove('active'));
 }
 
 // =====================================================
@@ -2276,62 +2411,9 @@ window.addEventListener('resize', () => {
  * @param {Array} predictions
  */
 function drawBoxes(predictions) {
+  // ไม่วาดกรอบหรือ label ใด ๆ เพื่อให้หน้ากล้องดูเป็น AR จริงมากขึ้น
+  // ยังใช้ AI detection อยู่เหมือนเดิม แค่ไม่แสดงผลกรอบบนจอ
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (!predictions || predictions.length === 0) return;
-
-  const vw = videoEl.videoWidth   || 1;
-  const vh = videoEl.videoHeight  || 1;
-  const cw = canvas.width;
-  const ch = canvas.height;
-
-  // คำนวณ scale และ offset สำหรับ object-fit: cover
-  // (วิดีโออาจถูก crop เพื่อเต็มจอ)
-  const scaleX = cw / vw;
-  const scaleY = ch / vh;
-  const scale  = Math.max(scaleX, scaleY);   // cover = ใช้ scale ที่ใหญ่กว่า
-
-  const offsetX = (cw - vw * scale) / 2;
-  const offsetY = (ch - vh * scale) / 2;
-
-  // เลือกวัตถุกลางจอสำหรับ highlight
-  const selected = selectCenterObject(predictions);
-
-  predictions.forEach(pred => {
-    const [x, y, w, h] = pred.bbox;
-    const isSelected = (pred === selected);
-
-    // แปลง coordinate จาก video space → canvas space
-    const rx = x * scale + offsetX;
-    const ry = y * scale + offsetY;
-    const rw = w * scale;
-    const rh = h * scale;
-
-    // เลือกสี: วัตถุที่เลือก = เขียวสว่าง, อื่นๆ = โปร่งแสง
-    const color = isSelected ? '#00ffe0' : 'rgba(255,255,255,0.35)';
-    const lw    = isSelected ? 2.5 : 1.5;
-
-    // วาดกรอบ
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = lw;
-    ctx.shadowColor = isSelected ? 'rgba(0,255,224,0.6)' : 'transparent';
-    ctx.shadowBlur  = isSelected ? 8 : 0;
-    ctx.strokeRect(rx, ry, rw, rh);
-
-    // วาด label บน bounding box
-    const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
-    ctx.font         = `bold ${isSelected ? 14 : 12}px Prompt, sans-serif`;
-    ctx.fillStyle    = color;
-    ctx.shadowColor  = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur   = 4;
-
-    const textY = ry > 24 ? ry - 8 : ry + rh + 18;
-    ctx.fillText(label, rx + 4, textY);
-
-    // reset shadow
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
-  });
 }
 
 // =====================================================
@@ -2365,7 +2447,8 @@ window.addEventListener('load', () => {
   // ซ่อน loading overlay หลังจาก DOM พร้อม
   setTimeout(() => {
     hideLoadingOverlay();
-    // ซ่อน loading overlay ไว้ ให้แสดงเฉพาะตอนเปิดกล้อง
+    // เริ่ม preload AI แบบเงียบ ๆ เพื่อให้ตอนกดเริ่มบน iPad เร็วขึ้น
+    startAIPreload();
   }, 800);
 });
 
