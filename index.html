@@ -385,6 +385,2222 @@
       letter-spacing: 0.5px;
     }
 
+    /* ---- 3D AR Question Popup ---- */
+
+    /* Keyframe: เด้งเข้า 3D */
+    @keyframes popIn3D {
+      0% {
+        opacity: 0;
+        transform: perspective(600px) rotateX(25deg) scale(0.55) translateY(30px);
+        filter: blur(6px);
+      }
+      60% {
+        opacity: 1;
+        transform: perspective(600px) rotateX(-4deg) scale(1.04) translateY(-4px);
+        filter: blur(0);
+      }
+      80% {
+        transform: perspective(600px) rotateX(2deg) scale(0.98) translateY(2px);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(600px) rotateX(0deg) scale(1) translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    /* Keyframe: floating เบาๆ หลังเด้งเข้า */
+    @keyframes floatAR {
+      0%, 100% { transform: perspective(600px) translateY(0px) rotateX(0deg); }
+      33%       { transform: perspective(600px) translateY(-5px) rotateX(1.5deg); }
+      66%       { transform: perspective(600px) translateY(-2px) rotateX(-1deg); }
+    }
+
+    /* Keyframe: เส้นแสงเลื่อน (shimmer) */
+    @keyframes shimmer {
+      0%   { left: -100%; }
+      100% { left: 200%; }
+    }
+
+    /* Keyframe: glow pulse */
+    @keyframes glowPulse {
+      0%, 100% { box-shadow:
+        0 0 0 1px rgba(0,255,224,0.30),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 40px rgba(0,255,224,0.10),
+        0 2px 0 rgba(255,255,255,0.08) inset; }
+      50% { box-shadow:
+        0 0 0 1px rgba(0,255,224,0.55),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 60px rgba(0,255,224,0.22),
+        0 2px 0 rgba(255,255,255,0.08) inset; }
+    }
+
+    /* Keyframe: จุดกระพริบ */
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.25; }
+    }
+
+    /* wrapper: วาง popup ในตำแหน่ง absolute บนหน้าจอ */
+    #arPopupWrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 10;          /* เหนือ canvas และ ar-ui ทั้งหมด */
+      pointer-events: none;
+    }
+
+    /* ตัว popup หลัก */
+    #questionPopup {
+      /* ตำแหน่งเริ่มต้น (จะถูก JS กำหนดด้วย left/top) */
+      position: absolute;
+      width: min(78vw, 300px);
+
+      /* 3D glass morphism */
+      background:
+        linear-gradient(145deg,
+          rgba(8,8,20,0.82) 0%,
+          rgba(0,30,30,0.78) 50%,
+          rgba(8,8,20,0.82) 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(0,255,224,0.28);
+      padding: 18px 20px 16px;
+
+      /* เงา + glow */
+      box-shadow:
+        0 0 0 1px rgba(0,255,224,0.30),
+        0 8px 32px rgba(0,0,0,0.70),
+        0 0 40px rgba(0,255,224,0.10),
+        0 2px 0 rgba(255,255,255,0.08) inset;
+
+      /* blur พื้นหลัง */
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+      /* perspective base */
+      transform-origin: center bottom;
+
+      /* ซ่อนก่อน */
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* เส้นแสงบน */
+    #questionPopup::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0,255,224,0.9) 50%,
+        transparent 100%);
+      opacity: 0.7;
+    }
+
+    /* shimmer layer */
+    #questionPopup::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(105deg,
+        transparent 0%,
+        rgba(255,255,255,0.06) 50%,
+        transparent 100%);
+      pointer-events: none;
+    }
+
+    /* state: แสดง — เด้งเข้าแล้ว float */
+    #questionPopup.pop-in {
+      opacity: 1;
+      animation:
+        popIn3D 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards,
+        glowPulse 2.5s ease-in-out 0.6s infinite;
+    }
+
+    #questionPopup.pop-in::after {
+      animation: shimmer 1.8s ease 0.5s forwards;
+    }
+
+    /* float หลัง pop เข้า */
+    #questionPopup.floating {
+      animation:
+        floatAR 4s ease-in-out infinite,
+        glowPulse 2.5s ease-in-out infinite;
+    }
+
+    /* แท็กชื่อวัตถุ */
+    .popup-object-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,255,224,0.10);
+      border: 1px solid rgba(0,255,224,0.30);
+      border-radius: 100px;
+      padding: 4px 11px 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 11px;
+    }
+
+    .popup-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px rgba(0,255,224,0.8);
+      animation: dotBlink 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    /* ข้อความคำถามหลัก */
+    #popupQuestionText {
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.45;
+      color: #fff;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      letter-spacing: 0.1px;
+    }
+
+    /* เส้นล่าง + hint */
+    .popup-divider {
+      margin: 12px 0 8px;
+      height: 1px;
+      background: linear-gradient(90deg,
+        rgba(0,255,224,0.2) 0%,
+        transparent 100%);
+    }
+
+    .popup-hint {
+      font-size: 11px;
+      color: rgba(255,255,255,0.28);
+      font-weight: 400;
+    }
+
+    /* เส้นเชื่อมจาก popup ไปยัง bounding box (connector line) */
+    #popupConnector {
+      position: absolute;
+      pointer-events: none;
+      z-index: 9;
+    }
+
+    /* ===== ตัวนับ confidence / lock indicator ===== */
+    #lockIndicator {
+      position: fixed;
+      top: 50%;
+      right: 18px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #lockIndicator.visible { opacity: 1; }
+
+    .lock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.2s;
+    }
+
+    .lock-dot.active { background: var(--accent); }
+
+    /* Loading overlay ขณะโหลด AI */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.5s ease;
+    }
+
+    #loadingOverlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 52px;
+      height: 52px;
+      border: 3px solid rgba(0,255,224,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .loading-logo {
+      font-family: var(--font-en);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    /* bottom atmosphere fade */
+    .ar-bottom-fade {
+      height: 80px;
+      background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* ===== Responsive: ป้องกันหน้าจอที่กว้างมาก ===== */
+    @media (min-width: 500px) {
+      .menu-inner { max-width: 420px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===================================================
+     LOADING OVERLAY (แสดงขณะโหลด AI)
+=================================================== -->
+<div id="loadingOverlay">
+  <div class="loading-logo">AR Question</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingMsg">กำลังเตรียมระบบ...</div>
+</div>
+
+<!-- ===================================================
+     PAGE 1: MENU PAGE
+=================================================== -->
+<div class="page" id="menuPage">
+  <div class="menu-inner">
+
+    <!-- ไอคอน -->
+    <div class="menu-icon">🔍</div>
+
+    <!-- ชื่อเว็บ -->
+    <div>
+      <div class="menu-title">AR Open Question</div>
+      <div class="menu-subtitle">AI Camera · Object Detection</div>
+    </div>
+
+    <!-- คำอธิบาย -->
+    <div class="menu-desc">
+      ส่องกล้องไปที่วัตถุรอบตัว<br/>
+      AI จะ<strong>ตรวจจับวัตถุ</strong>และสร้าง<br/>
+      <strong>คำถามปลายเปิด</strong>ขึ้นมาให้คุณคิด
+    </div>
+
+    <!-- Feature chips -->
+    <div class="menu-chips">
+      <span class="chip">🤖 TensorFlow.js</span>
+      <span class="chip">📷 กล้องหลัง</span>
+      <span class="chip">🧠 COCO-SSD</span>
+      <span class="chip">✨ AR Overlay</span>
+    </div>
+
+    <!-- ปุ่มเริ่ม -->
+    <button class="btn-start" id="btnStart" onclick="startCamera()">
+      <span class="btn-icon">📷</span>
+      เริ่มเปิดกล้อง
+    </button>
+
+    <!-- หมายเหตุ -->
+    <div class="menu-footer">
+      ต้องการอนุญาตใช้กล้อง · ไม่บันทึกข้อมูลใดๆ<br/>
+      รองรับ Android และ iOS
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================================================
+     PAGE 2: CAMERA PAGE
+=================================================== -->
+<div class="page hidden" id="cameraPage">
+
+  <!-- วิดีโอ feed -->
+  <video id="videoEl" autoplay playsinline muted></video>
+
+  <!-- Canvas สำหรับ bounding box -->
+  <canvas id="overlayCanvas"></canvas>
+
+  <!-- AR UI Layer -->
+  <div class="ar-ui">
+
+    <!-- Top Bar -->
+    <div class="ar-topbar">
+      <button class="btn-back" onclick="goBack()">
+        ← กลับ
+      </button>
+      <div class="ar-brand">AR·Q</div>
+      <div id="statusBadge">⏳ โหลด AI</div>
+    </div>
+
+    <!-- กรอบ Center Zone Guide -->
+    <div class="center-guide">
+      <div class="cg-br"></div>
+      <div class="cg-bl"></div>
+      <div class="center-hint">วางวัตถุไว้ที่นี่</div>
+    </div>
+
+    <!-- bottom gradient (เหลือไว้เพื่อ atmosphere ล่างจอ) -->
+    <div class="ar-bottom-fade"></div>
+
+  </div>
+
+  <!-- Lock Indicator (จุดนับ confidence ต่อเนื่อง) -->
+  <div id="lockIndicator">
+    <div class="lock-dot" id="dot0"></div>
+    <div class="lock-dot" id="dot1"></div>
+    <div class="lock-dot" id="dot2"></div>
+  </div>
+
+</div>
+
+<!-- ===================================================
+     3D AR POPUP LAYER (อยู่นอก ar-ui เพื่อ z-index สูงสุด)
+=================================================== -->
+<div id="arPopupWrapper">
+  <!-- SVG connector line จาก popup ไปยัง bounding box -->
+  <svg id="popupConnector" width="100%" height="100%"
+       style="position:fixed;inset:0;pointer-events:none;z-index:9;overflow:visible;">
+    <defs>
+      <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:rgba(0,255,224,0.8);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:rgba(0,255,224,0);stop-opacity:0" />
+      </linearGradient>
+    </defs>
+    <line id="connectorLine"
+          x1="0" y1="0" x2="0" y2="0"
+          stroke="url(#lineGrad)"
+          stroke-width="1.5"
+          stroke-dasharray="4 4"
+          opacity="0" />
+  </svg>
+
+  <!-- Popup หลัก -->
+  <div id="questionPopup">
+    <!-- แท็กชื่อวัตถุ -->
+    <div class="popup-object-tag" id="popupObjectTag">
+      <div class="popup-dot"></div>
+      <span id="popupObjectLabel">object</span>
+    </div>
+    <!-- คำถามหลัก -->
+    <div id="popupQuestionText">Question text here</div>
+    <!-- divider + hint -->
+    <div class="popup-divider"></div>
+    <div class="popup-hint">💭 Think about your answer</div>
+  </div>
+</div>
+
+<!-- ===================================================
+     JAVASCRIPT: AI + CAMERA LOGIC
+=================================================== -->
+<script>
+// =====================================================
+// SUPPORTED_OBJECTS: รายชื่อ COCO-SSD 80 classes ทั้งหมด
+// วัตถุที่ AI ตรวจเจอต้องอยู่ใน list นี้จึงจะแสดงคำถาม
+// =====================================================
+const SUPPORTED_OBJECTS = new Set([
+  // --- คน ---
+  'person',
+  // --- ยานพาหนะ ---
+  'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+  'train', 'truck', 'boat',
+  // --- อุปกรณ์กีฬา / กลางแจ้ง ---
+  'traffic light', 'fire hydrant', 'stop sign', 'parking meter',
+  'bench',
+  // --- สัตว์ ---
+  'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+  'elephant', 'bear', 'zebra', 'giraffe',
+  // --- เครื่องใช้ / กระเป๋า ---
+  'backpack', 'umbrella', 'handbag', 'tie', 'suitcase',
+  // --- กีฬา ---
+  'frisbee', 'skis', 'snowboard', 'sports ball', 'kite',
+  'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
+  'tennis racket',
+  // --- ของใช้ในครัว / อาหาร ---
+  'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon',
+  'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli',
+  'carrot', 'hot dog', 'pizza', 'donut', 'cake',
+  // --- เฟอร์นิเจอร์ / ในบ้าน ---
+  'chair', 'couch', 'potted plant', 'bed', 'dining table',
+  'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+  'cell phone',
+  // --- เครื่องใช้ไฟฟ้า / ออฟฟิศ ---
+  'microwave', 'oven', 'toaster', 'sink', 'refrigerator',
+  'book', 'clock', 'vase', 'scissors', 'teddy bear',
+  'hair drier', 'toothbrush'
+]);
+
+// =====================================================
+// DEFAULT_QUESTIONS: คำถามปลายเปิดทั่วไป
+// ใช้เมื่อวัตถุอยู่ใน SUPPORTED_OBJECTS แต่ไม่มีใน QUESTION_BANK
+// =====================================================
+const DEFAULT_QUESTIONS = [
+  'What is this object used for?',
+  'Where do you usually see this object?',
+  'Who uses this object the most?',
+  'How does this object make your life easier?',
+  'Describe this object in your own words.',
+  'What would happen if this object did not exist?',
+  'Can you think of another use for this object?',
+  'How is this object made or created?',
+  'What material is this object made of?',
+  'Is this object important in daily life? Why?',
+  'How has this object changed over time?',
+  'What do you like or dislike about this object?',
+  'When was the last time you used something like this?',
+  'How would a child describe this object?',
+  'If you had to explain this object to someone who had never seen it, what would you say?'
+];
+
+// =====================================================
+// QUESTION BANK: วัตถุที่มีคำถามเฉพาะ
+// วัตถุที่ไม่อยู่ใน QUESTION_BANK จะใช้ DEFAULT_QUESTIONS แทน
+// =====================================================
+const QUESTION_BANK = {
+  'cell phone': [
+    'How do you use this object?',
+    'When do you usually use this object?',
+    'Why is this object useful?',
+    'What would life be like without this device?',
+    'How has this object changed the way people communicate?'
+  ],
+  'cup': [
+    'What do you use this for?',
+    'What can you put inside this object?',
+    'Where do you usually see this object?',
+    'What material is this object made of?',
+    'How does this object make your daily life easier?'
+  ],
+  'chair': [
+    'What do you use this object for?',
+    'Where do people usually use this object?',
+    'Describe how you use this object.',
+    'Who might need this object the most?',
+    'What would happen if this object did not exist?'
+  ],
+  'book': [
+    'What can you learn from this object?',
+    'When do you usually use this object?',
+    'Why is this object important?',
+    'What kind of book do you enjoy reading?',
+    'How has reading a book changed your thinking?'
+  ],
+  'bottle': [
+    'What do you usually put in this object?',
+    'Where do you carry this object?',
+    'How do you use this object?',
+    'Why is staying hydrated important?',
+    'Describe a time when this object was very useful.'
+  ],
+  'laptop': [
+    'What do you use a laptop for?',
+    'When do you use this object?',
+    'Why is this object useful?',
+    'How has this device changed the way people work?',
+    'What can you do on a laptop that you cannot do on a phone?'
+  ],
+  'keyboard': [
+    'What do you use this keyboard for?',
+    'When do you type on a keyboard?',
+    'Describe this object.',
+    'How would your work change without a keyboard?',
+    'What skills do you need to use this object well?'
+  ],
+  'mouse': [
+    'What do you use this mouse for?',
+    'How does this object help you?',
+    'Where do you usually see this object?',
+    'Describe how a mouse works.',
+    'Do you prefer a mouse or a touchpad? Why?'
+  ],
+  'person': [
+    'What is this person doing?',
+    'Describe this person in one sentence.',
+    'Where do you think this person is?',
+    'What do you think this person is thinking about?',
+    'How would you describe the expression on this person\'s face?'
+  ],
+  'tv': [
+    'What do you watch on this device?',
+    'How does this object entertain you?',
+    'How has television changed over the years?',
+    'What kind of program do you enjoy watching?',
+    'Do you think television is still important today?'
+  ],
+  'remote': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'Which device does this remote control?'
+  ],
+  'couch': [
+    'Where do you usually find this object?',
+    'How does this object make you feel?',
+    'Describe a moment when this object was very comfortable.'
+  ],
+  'sofa': [
+    'Where do you usually find this object?',
+    'How does this object make you feel?',
+    'Why is comfortable furniture important at home?'
+  ],
+  'potted plant': [
+    'Why do people keep plants indoors?',
+    'How do you take care of this object?',
+    'What are the benefits of having plants in a room?',
+    'Describe the color and shape of this plant.'
+  ],
+  'clock': [
+    'Why is knowing the time important?',
+    'Describe how this object works.',
+    'How would your day be different without this object?'
+  ],
+  'vase': [
+    'What do people usually put in this object?',
+    'Describe the shape and color of this object.',
+    'Where do you usually see this object?'
+  ],
+  'scissors': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'When do you most often need this object?'
+  ],
+  'pen': [
+    'What do you use this object for?',
+    'When was the last time you wrote by hand?',
+    'How is writing by hand different from typing?'
+  ],
+  'backpack': [
+    'What do you carry in this object?',
+    'When do you usually use this object?',
+    'Why is this object useful for students?'
+  ],
+  'umbrella': [
+    'When do you use this object?',
+    'How does this object protect you?',
+    'Describe a time when this object saved you from getting wet.'
+  ],
+  'handbag': [
+    'What do you carry in this object?',
+    'When do you usually bring this object?',
+    'Describe this object\'s size and color.'
+  ],
+  'tie': [
+    'When do people usually wear this object?',
+    'How do you put this object on?',
+    'What does wearing this object tell others about you?'
+  ],
+  'suitcase': [
+    'When do you use this object?',
+    'What do you pack inside this object?',
+    'Describe your most memorable trip using this object.'
+  ],
+  'bicycle': [
+    'When do you usually ride this object?',
+    'What are the benefits of cycling?',
+    'How do you stay safe when using this object?'
+  ],
+  'car': [
+    'Where do you usually travel by car?',
+    'What makes a car useful in daily life?',
+    'How would your life be different without a car?'
+  ],
+  'traffic light': [
+    'Why are traffic lights important?',
+    'Describe how traffic lights work.',
+    'What would roads be like without traffic lights?'
+  ],
+  'fire hydrant': [
+    'Why is this object important in a city?',
+    'How does this object help people?',
+    'When would you need to use this object?'
+  ],
+  'bench': [
+    'Where do you usually see this object?',
+    'How do people use this object?',
+    'Describe a time you sat on this kind of object.'
+  ],
+  'dining table': [
+    'What do people do at this object?',
+    'Describe a typical meal at a dining table.',
+    'Why is sharing a meal at a table important?'
+  ],
+  'wine glass': [
+    'What do people put in this object?',
+    'Describe the shape of this object.',
+    'When is this object typically used?'
+  ],
+  'fork': [
+    'How do you use this object?',
+    'What foods do you eat with this object?',
+    'Compare this object to another eating utensil.'
+  ],
+  'knife': [
+    'What do you use this object for in the kitchen?',
+    'How do you stay safe when using this object?',
+    'Describe how you would cut something with this object.'
+  ],
+  'spoon': [
+    'What foods do you eat with this object?',
+    'How do you use this object?',
+    'Compare this object to a fork.'
+  ],
+  'bowl': [
+    'What do you put in this object?',
+    'Describe the shape of this object.',
+    'When do you usually use this object?'
+  ],
+  'banana': [
+    'Describe the taste of this food.',
+    'What nutrients does this food provide?',
+    'How do you usually eat this fruit?'
+  ],
+  'apple': [
+    'Describe the taste and texture of this fruit.',
+    'Why are fruits important for your health?',
+    'When do you usually eat this fruit?'
+  ],
+  'orange': [
+    'Describe the taste of this fruit.',
+    'How do you peel this fruit?',
+    'What vitamins does this fruit contain?'
+  ],
+  'pizza': [
+    'Describe your favorite pizza topping.',
+    'When do you usually eat pizza?',
+    'How is pizza made from scratch?'
+  ],
+  'hot dog': [
+    'When do you usually eat this food?',
+    'Describe the taste of this food.',
+    'What toppings do you add to this food?'
+  ],
+  'sandwich': [
+    'What ingredients would you put in this sandwich?',
+    'Describe a sandwich you enjoy eating.',
+    'When do you usually eat a sandwich?'
+  ],
+  'cake': [
+    'What occasions do you celebrate with this food?',
+    'Describe your favorite flavor of this food.',
+    'How is this food made?'
+  ],
+  'donut': [
+    'Describe your favorite flavor of this food.',
+    'When do you usually eat this food?',
+    'What makes this food a popular snack?'
+  ],
+  'dog': [
+    'What do dogs need to stay healthy?',
+    'How do dogs communicate with people?',
+    'Describe a dog you have seen or owned.'
+  ],
+  'cat': [
+    'Describe the behavior of this animal.',
+    'Why do people keep cats as pets?',
+    'How do cats communicate with their owners?'
+  ],
+  'bird': [
+    'Describe the features of this animal.',
+    'Why are birds important for the environment?',
+    'Have you ever watched birds in nature? What did you see?'
+  ],
+  'horse': [
+    'What are horses used for by people?',
+    'Describe the size and features of this animal.',
+    'How do you care for a horse?'
+  ],
+  'cow': [
+    'What products do we get from this animal?',
+    'Describe where this animal usually lives.',
+    'Why is this animal important in farming?'
+  ],
+  'sheep': [
+    'What products do we get from this animal?',
+    'Describe the appearance of this animal.',
+    'Where do sheep usually live?'
+  ],
+  'elephant': [
+    'Describe the special features of this animal.',
+    'Why are elephants considered intelligent?',
+    'What challenges do elephants face in the wild?'
+  ],
+  'bear': [
+    'Describe the habitat of this animal.',
+    'How does this animal survive in winter?',
+    'What do bears eat in the wild?'
+  ],
+  'zebra': [
+    'Describe the unique appearance of this animal.',
+    'Where do zebras live in the wild?',
+    'Why do you think zebras have stripes?'
+  ],
+  'giraffe': [
+    'Describe the unique features of this animal.',
+    'How does this animal\'s body help it survive?',
+    'Where do giraffes live in the wild?'
+  ],
+  // --- ยานพาหนะ ---
+  'bicycle': [
+    'When do you usually ride this object?',
+    'What are the benefits of cycling?',
+    'How do you stay safe when using this object?',
+    'Describe the parts of this object.',
+    'Is cycling popular in your city? Why or why not?'
+  ],
+  'car': [
+    'Where do you usually travel by car?',
+    'What makes a car useful in daily life?',
+    'How would your life be different without a car?',
+    'Describe the features of a modern car.',
+    'What is the environmental impact of using a car?'
+  ],
+  'motorcycle': [
+    'When do people use a motorcycle instead of a car?',
+    'What safety equipment do you need when riding this?',
+    'Describe the advantages and disadvantages of this vehicle.',
+    'Is riding a motorcycle popular where you live?'
+  ],
+  'airplane': [
+    'How does this object help people travel?',
+    'Describe what it feels like to travel on this object.',
+    'What technology makes this object fly?',
+    'Where is the farthest place you have traveled by this?'
+  ],
+  'bus': [
+    'Why is public transportation like this important?',
+    'Describe a typical bus journey.',
+    'How does this object benefit a city?',
+    'When do you prefer using this over a car?'
+  ],
+  'train': [
+    'What are the advantages of traveling by train?',
+    'Describe a memorable train journey.',
+    'How does this object compare to other forms of transport?',
+    'Why do some countries rely heavily on trains?'
+  ],
+  'truck': [
+    'What is this vehicle used for?',
+    'How does this object help the economy?',
+    'Describe the size and features of this vehicle.',
+    'What kinds of things do trucks carry?'
+  ],
+  'boat': [
+    'Where do you use this object?',
+    'Describe what it feels like to ride on this.',
+    'What are the different types of this object?',
+    'Why do people use this instead of flying?'
+  ],
+  // --- สัญญาณจราจร / สาธารณะ ---
+  'traffic light': [
+    'Why are traffic lights important?',
+    'Describe how traffic lights work.',
+    'What would roads be like without traffic lights?',
+    'How do you behave at a traffic light?'
+  ],
+  'fire hydrant': [
+    'Why is this object important in a city?',
+    'How does this object help people?',
+    'When would you need to use this object?',
+    'Where do you usually see this object?'
+  ],
+  'stop sign': [
+    'Why is this sign important for road safety?',
+    'Describe what drivers must do when they see this.',
+    'What would happen if this sign did not exist?'
+  ],
+  'parking meter': [
+    'What is this object used for?',
+    'How does this object help manage city parking?',
+    'Have you ever used one of these? Describe the experience.'
+  ],
+  'bench': [
+    'Where do you usually see this object?',
+    'How do people use this object?',
+    'Describe a time you sat on this kind of object.',
+    'Why are benches important in public spaces?'
+  ],
+  // --- สัตว์เพิ่มเติม ---
+  'bird': [
+    'Describe the features of this animal.',
+    'Why are birds important for the environment?',
+    'Have you ever watched birds in nature? What did you see?',
+    'What sounds does this animal make?'
+  ],
+  'cat': [
+    'Describe the behavior of this animal.',
+    'Why do people keep cats as pets?',
+    'How do cats communicate with their owners?',
+    'Compare cats and dogs as pets.'
+  ],
+  'dog': [
+    'What do dogs need to stay healthy?',
+    'How do dogs communicate with people?',
+    'Describe a dog you have seen or owned.',
+    'Why are dogs called man\'s best friend?'
+  ],
+  'horse': [
+    'What are horses used for by people?',
+    'Describe the size and features of this animal.',
+    'How do you care for a horse?',
+    'Where do horses usually live?'
+  ],
+  'sheep': [
+    'What products do we get from this animal?',
+    'Describe the appearance of this animal.',
+    'Where do sheep usually live?',
+    'How do farmers care for this animal?'
+  ],
+  'cow': [
+    'What products do we get from this animal?',
+    'Describe where this animal usually lives.',
+    'Why is this animal important in farming?',
+    'How does this animal contribute to your diet?'
+  ],
+  'elephant': [
+    'Describe the special features of this animal.',
+    'Why are elephants considered intelligent?',
+    'What challenges do elephants face in the wild?',
+    'How do elephants communicate with each other?'
+  ],
+  'bear': [
+    'Describe the habitat of this animal.',
+    'How does this animal survive in winter?',
+    'What do bears eat in the wild?',
+    'Why is it important to protect bears?'
+  ],
+  'zebra': [
+    'Describe the unique appearance of this animal.',
+    'Where do zebras live in the wild?',
+    'Why do you think zebras have stripes?',
+    'How do zebras protect themselves from predators?'
+  ],
+  // --- กีฬา ---
+  'frisbee': [
+    'How do you play with this object?',
+    'Describe the shape and material of this object.',
+    'When do you usually use this object?'
+  ],
+  'skis': [
+    'Where do people use this object?',
+    'Describe the skills needed to use this object.',
+    'Have you ever used this object? What was it like?'
+  ],
+  'snowboard': [
+    'Where do people use this object?',
+    'How is this object different from skis?',
+    'What skills do you need to use this object?'
+  ],
+  'sports ball': [
+    'What sport is this ball used in?',
+    'Describe how this ball is used in a game.',
+    'What skills do you need to play with this?'
+  ],
+  'kite': [
+    'When do people fly this object?',
+    'Describe what you need to fly this object.',
+    'Have you ever flown one of these? What was it like?'
+  ],
+  'baseball bat': [
+    'What sport is this object used in?',
+    'Describe how you use this object.',
+    'What skills do you need to use this object well?'
+  ],
+  'baseball glove': [
+    'What sport is this object used in?',
+    'Describe the purpose of this object.',
+    'How do you use this object in a game?'
+  ],
+  'skateboard': [
+    'Where do people usually use this object?',
+    'Describe the skills needed to use this object.',
+    'What safety gear do you need when using this?'
+  ],
+  'surfboard': [
+    'Where do people use this object?',
+    'Describe how you use this object.',
+    'What skills do you need to surf?'
+  ],
+  'tennis racket': [
+    'What sport uses this object?',
+    'Describe how you hold and use this object.',
+    'What skills do you need to play this sport well?'
+  ],
+  // --- ครัว / อาหาร ---
+  'bottle': [
+    'What do you usually put in this object?',
+    'Where do you carry this object?',
+    'How do you use this object?',
+    'Why is staying hydrated important?',
+    'Describe a time when this object was very useful.'
+  ],
+  'wine glass': [
+    'What do people put in this object?',
+    'Describe the shape of this object.',
+    'When is this object typically used?'
+  ],
+  'cup': [
+    'What do you use this for?',
+    'What can you put inside this object?',
+    'Where do you usually see this object?',
+    'What material is this object made of?',
+    'How does this object make your daily life easier?'
+  ],
+  'fork': [
+    'How do you use this object?',
+    'What foods do you eat with this object?',
+    'Compare this object to another eating utensil.'
+  ],
+  'knife': [
+    'What do you use this object for in the kitchen?',
+    'How do you stay safe when using this object?',
+    'Describe how you would cut something with this object.'
+  ],
+  'spoon': [
+    'What foods do you eat with this object?',
+    'How do you use this object?',
+    'Compare this object to a fork.'
+  ],
+  'bowl': [
+    'What do you put in this object?',
+    'Describe the shape of this object.',
+    'When do you usually use this object?'
+  ],
+  'banana': [
+    'Describe the taste of this food.',
+    'What nutrients does this food provide?',
+    'How do you usually eat this fruit?',
+    'In what dishes can you use this fruit?'
+  ],
+  'apple': [
+    'Describe the taste and texture of this fruit.',
+    'Why are fruits important for your health?',
+    'When do you usually eat this fruit?',
+    'What can you make with this fruit?'
+  ],
+  'sandwich': [
+    'What ingredients would you put in this?',
+    'Describe a sandwich you enjoy eating.',
+    'When do you usually eat a sandwich?'
+  ],
+  'orange': [
+    'Describe the taste of this fruit.',
+    'How do you peel this fruit?',
+    'What vitamins does this fruit contain?'
+  ],
+  'broccoli': [
+    'Why is this vegetable good for your health?',
+    'How do you usually cook this vegetable?',
+    'Do you enjoy eating this? Why or why not?'
+  ],
+  'carrot': [
+    'What are the health benefits of this vegetable?',
+    'How do you usually eat this vegetable?',
+    'Describe the color and texture of this vegetable.'
+  ],
+  'hot dog': [
+    'When do you usually eat this food?',
+    'Describe the taste of this food.',
+    'What toppings do you add to this food?'
+  ],
+  'pizza': [
+    'Describe your favorite pizza topping.',
+    'When do you usually eat pizza?',
+    'How is pizza made from scratch?',
+    'Why is pizza so popular around the world?'
+  ],
+  'donut': [
+    'Describe your favorite flavor of this food.',
+    'When do you usually eat this food?',
+    'What makes this food a popular snack?'
+  ],
+  'cake': [
+    'What occasions do you celebrate with this food?',
+    'Describe your favorite flavor of this food.',
+    'How is this food made?'
+  ],
+  // --- เฟอร์นิเจอร์ / บ้าน ---
+  'chair': [
+    'What do you use this object for?',
+    'Where do people usually use this object?',
+    'Describe how you use this object.',
+    'Who might need this object the most?',
+    'What would happen if this object did not exist?'
+  ],
+  'couch': [
+    'Where do you usually find this object?',
+    'How does this object make you feel?',
+    'Describe a moment when this object was very comfortable.',
+    'Why is comfortable furniture important at home?'
+  ],
+  'potted plant': [
+    'Why do people keep plants indoors?',
+    'How do you take care of this object?',
+    'What are the benefits of having plants in a room?',
+    'Describe the color and shape of this plant.'
+  ],
+  'bed': [
+    'Why is sleep important for your health?',
+    'Describe your ideal sleeping environment.',
+    'How many hours of sleep do you usually get?',
+    'What makes a bed comfortable?'
+  ],
+  'dining table': [
+    'What do people do at this object?',
+    'Describe a typical meal at a dining table.',
+    'Why is sharing a meal at a table important?',
+    'What memories do you have around a dining table?'
+  ],
+  'toilet': [
+    'Why is clean sanitation important?',
+    'Describe how this object has improved modern life.',
+    'Why do we take this object for granted?'
+  ],
+  'tv': [
+    'What do you watch on this device?',
+    'How does this object entertain you?',
+    'How has television changed over the years?',
+    'What kind of program do you enjoy watching?',
+    'Do you think television is still important today?'
+  ],
+  // --- อุปกรณ์ไฟฟ้า / เทคโนโลยี ---
+  'laptop': [
+    'What do you use a laptop for?',
+    'When do you use this object?',
+    'Why is this object useful?',
+    'How has this device changed the way people work?',
+    'What can you do on a laptop that you cannot do on a phone?'
+  ],
+  'mouse': [
+    'What do you use this mouse for?',
+    'How does this object help you?',
+    'Where do you usually see this object?',
+    'Describe how a mouse works.',
+    'Do you prefer a mouse or a touchpad? Why?'
+  ],
+  'remote': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'Which device does this remote control?',
+    'What would you do if you could not find this object?'
+  ],
+  'keyboard': [
+    'What do you use this keyboard for?',
+    'When do you type on a keyboard?',
+    'Describe this object.',
+    'How would your work change without a keyboard?',
+    'What skills do you need to use this object well?'
+  ],
+  'cell phone': [
+    'How do you use this object?',
+    'When do you usually use this object?',
+    'Why is this object useful?',
+    'What would life be like without this device?',
+    'How has this object changed the way people communicate?'
+  ],
+  'microwave': [
+    'What do you use this object for?',
+    'How does this object save you time?',
+    'Describe how a microwave works.',
+    'What foods do you heat in this object?'
+  ],
+  'oven': [
+    'What do you cook in this object?',
+    'Describe how to use this object safely.',
+    'How has this object changed the way people cook?',
+    'What is your favorite food to make in an oven?'
+  ],
+  'toaster': [
+    'What do you put in this object?',
+    'Describe how this object works.',
+    'When do you usually use this object?'
+  ],
+  'sink': [
+    'Why is this object important for hygiene?',
+    'Describe the different uses of this object.',
+    'Where do you find this object in a home?'
+  ],
+  'refrigerator': [
+    'What do you keep in this object?',
+    'Why is this object important for food safety?',
+    'Describe how this object keeps food fresh.',
+    'What would happen if this object stopped working?'
+  ],
+  // --- ของใช้ / อื่น ๆ ---
+  'book': [
+    'What can you learn from this object?',
+    'When do you usually use this object?',
+    'Why is this object important?',
+    'What kind of book do you enjoy reading?',
+    'How has reading a book changed your thinking?'
+  ],
+  'clock': [
+    'Why is knowing the time important?',
+    'Describe how this object works.',
+    'How would your day be different without this object?',
+    'What type of clock do you prefer — digital or analog?'
+  ],
+  'vase': [
+    'What do people usually put in this object?',
+    'Describe the shape and color of this object.',
+    'Where do you usually see this object?'
+  ],
+  'scissors': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'When do you most often need this object?',
+    'What safety rules should you follow with this object?'
+  ],
+  'teddy bear': [
+    'Why do children love this object?',
+    'Describe a memory you have with this kind of toy.',
+    'How does this object bring comfort to people?'
+  ],
+  'hair drier': [
+    'How do you use this object?',
+    'When do you use this object in your daily routine?',
+    'Describe how this object works.'
+  ],
+  'toothbrush': [
+    'Why is dental hygiene important?',
+    'Describe your daily routine with this object.',
+    'How often should you replace this object?'
+  ],
+  // --- กระเป๋า / เครื่องแต่งกาย ---
+  'backpack': [
+    'What do you carry in this object?',
+    'When do you usually use this object?',
+    'Why is this object useful for students?',
+    'Describe the features of a good backpack.'
+  ],
+  'umbrella': [
+    'When do you use this object?',
+    'How does this object protect you?',
+    'Describe a time when this object saved you from getting wet.',
+    'What types of weather require this object?'
+  ],
+  'handbag': [
+    'What do you carry in this object?',
+    'When do you usually bring this object?',
+    'Describe this object\'s size and color.',
+    'Why is this object a fashion accessory as well as practical?'
+  ],
+  'tie': [
+    'When do people usually wear this object?',
+    'How do you put this object on?',
+    'What does wearing this object tell others about you?'
+  ],
+  'suitcase': [
+    'When do you use this object?',
+    'What do you pack inside this object?',
+    'Describe your most memorable trip using this object.',
+    'What features make a good suitcase?'
+  ],
+  // --- คน ---
+  'person': [
+    'What is this person doing?',
+    'Describe this person in one sentence.',
+    'Where do you think this person is?',
+    'What do you think this person is thinking about?',
+    'How would you describe the expression on this person\'s face?'
+  ]
+}; // end QUESTION_BANK
+
+// =====================================================
+// pickQuestion: เลือกคำถามจาก QUESTION_BANK หรือ DEFAULT_QUESTIONS
+// =====================================================
+
+/**
+ * สุ่มคำถามสำหรับวัตถุที่ตรวจเจอ
+ * - ถ้ามีใน QUESTION_BANK → สุ่มจาก QUESTION_BANK[objectName]
+ * - ถ้าไม่มี → สุ่มจาก DEFAULT_QUESTIONS
+ *
+ * @param {string} objectName - ชื่อวัตถุจาก COCO-SSD
+ * @param {string} lastQ      - คำถามล่าสุด (ป้องกันซ้ำ)
+ * @returns {string} คำถาม
+ */
+function pickQuestion(objectName, lastQ) {
+  const pool = QUESTION_BANK[objectName] || DEFAULT_QUESTIONS;
+
+  // สุ่มโดยพยายามไม่ซ้ำกับคำถามล่าสุด
+  let q;
+  let attempts = 0;
+  do {
+    q = pool[Math.floor(Math.random() * pool.length)];
+    attempts++;
+  } while (q === lastQ && pool.length > 1 && attempts < 10);
+
+  return q;
+}
+
+// ===== ค่าตั้งต้น และตัวแปร state =====
+
+const CONFIDENCE_THRESHOLD = 0.65;   // confidence ขั้นต่ำ 65%
+const DETECTION_INTERVAL   = 1100;   // ตรวจจับทุก ~1100ms
+const LOCK_REQUIRED_COUNT  = 3;      // ต้องเจอวัตถุเดิมกี่ครั้งก่อนล็อก
+const LOCK_DURATION        = 6000;   // ล็อกคำถามนานกี่ ms
+
+// ขนาดโซนกลางจอ (เปอร์เซ็นต์ของ canvas)
+const CENTER_ZONE_RATIO    = 0.45;   // 45% ของความกว้าง/สูง
+
+let model         = null;   // TensorFlow COCO-SSD model
+let stream        = null;   // MediaStream กล้อง
+let detectionLoop = null;   // setInterval handle
+let isRunning     = false;  // กำลังตรวจจับอยู่หรือไม่
+
+// ---- State สำหรับ debounce และ lock ----
+let candidateObject = null;    // วัตถุที่กำลังพิจารณา
+let candidateCount  = 0;       // นับครั้งที่เจอวัตถุเดิมต่อเนื่อง
+let lockedObject    = null;    // วัตถุที่ล็อกแล้ว (แสดงคำถาม)
+let lockExpiry      = 0;       // เวลาหมดล็อก (Date.now())
+let lastQuestion    = '';      // คำถามล่าสุด (ป้องกันซ้ำ)
+
+// ---- DOM references ----
+const videoEl        = document.getElementById('videoEl');
+const canvas         = document.getElementById('overlayCanvas');
+const ctx            = canvas.getContext('2d');
+const statusBadge    = document.getElementById('statusBadge');
+const lockIndicator  = document.getElementById('lockIndicator');
+const dots           = [
+  document.getElementById('dot0'),
+  document.getElementById('dot1'),
+  document.getElementById('dot2')
+];
+
+// ---- Popup DOM references ----
+const questionPopup    = document.getElementById('questionPopup');
+const popupObjectTag   = document.getElementById('popupObjectTag');
+const popupObjectLabel = document.getElementById('popupObjectLabel');
+const popupQuestionTxt = document.getElementById('popupQuestionText');
+const connectorLine    = document.getElementById('connectorLine');
+
+// ---- Popup state ----
+let floatTimer     = null;   // timeout เพื่อสลับจาก pop-in → floating
+let popupVisible   = false;
+let lastBBoxScreen = null;   // bbox ล่าสุดใน screen space (สำหรับ connector)
+
+// =====================================================
+// NAVIGATION: สลับหน้า
+// =====================================================
+
+/**
+ * เริ่มกล้อง — เรียกเมื่อกดปุ่ม "เริ่มเปิดกล้อง"
+ */
+async function startCamera() {
+  // แสดงหน้ากล้อง ซ่อนหน้าเมนู
+  document.getElementById('menuPage').classList.add('hidden');
+  document.getElementById('cameraPage').classList.remove('hidden');
+
+  // แสดง overlay ขณะโหลด
+  showLoadingOverlay('กำลังโหลด AI...');
+
+  // โหลด model ถ้ายังไม่ได้โหลด
+  if (!model) {
+    updateStatus('⏳ โหลด AI', '');
+    setLoadingMsg('กำลังโหลด AI (ครั้งแรกอาจใช้เวลา)...');
+    try {
+      model = await cocoSsd.load();
+    } catch (err) {
+      alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
+      goBack();
+      return;
+    }
+  }
+
+  // ขอสิทธิ์กล้อง
+  updateStatus('📷 เปิดกล้อง', '');
+  setLoadingMsg('กำลังเปิดกล้อง...');
+  try {
+    // ลองกล้องหลัง (environment) ก่อน
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+  } catch (err) {
+    // ถ้าไม่ได้กล้องหลัง ลองกล้องใดก็ได้
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch (err2) {
+      alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง');
+      goBack();
+      return;
+    }
+  }
+
+  // ผูก stream กับ video element
+  videoEl.srcObject = stream;
+  videoEl.onloadedmetadata = () => {
+    videoEl.play();
+    // ปรับ canvas ให้ตรงกับ viewport
+    resizeCanvas();
+    // ซ่อน loading overlay
+    hideLoadingOverlay();
+    // เริ่ม detection loop
+    startDetection();
+  };
+}
+
+/**
+ * กลับหน้าหลัก — ปิดกล้องและหยุด AI
+ */
+function goBack() {
+  // หยุด detection loop
+  stopDetection();
+
+  // ปิด camera stream
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  videoEl.srcObject = null;
+
+  // reset state
+  resetDetectionState();
+
+  // ซ่อนหน้ากล้อง แสดงหน้าเมนู
+  document.getElementById('cameraPage').classList.add('hidden');
+  document.getElementById('menuPage').classList.remove('hidden');
+
+  // ซ่อน loading overlay (กรณีกด back ระหว่างโหลด)
+  document.getElementById('loadingOverlay').classList.remove('fade-out');
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+// =====================================================
+// DETECTION LOOP: ตรวจจับวัตถุด้วย TensorFlow COCO-SSD
+// =====================================================
+
+/**
+ * เริ่ม detection loop ทุก DETECTION_INTERVAL ms
+ */
+function startDetection() {
+  if (isRunning) return;
+  isRunning = true;
+  updateStatus('🔍 สแกน', 'scanning');
+
+  detectionLoop = setInterval(async () => {
+    if (!model || !videoEl || videoEl.readyState < 2) return;
+
+    let predictions;
+    try {
+      // ตรวจจับวัตถุจาก video frame
+      predictions = await model.detect(videoEl);
+    } catch (e) {
+      return;
+    }
+
+    // กรองเฉพาะ confidence >= threshold และต้องอยู่ใน SUPPORTED_OBJECTS
+    // วัตถุที่ไม่มีคำถามเฉพาะจะใช้ DEFAULT_QUESTIONS แทน
+    const validPreds = predictions.filter(p =>
+      p.score >= CONFIDENCE_THRESHOLD && SUPPORTED_OBJECTS.has(p.class)
+    );
+
+    // วาด bounding box ทุก valid predictions
+    drawBoxes(validPreds);
+
+    if (validPreds.length === 0) {
+      // ไม่พบวัตถุ — reset candidate (แต่รักษา lock ไว้ถ้ายังไม่หมด)
+      candidateObject = null;
+      candidateCount  = 0;
+      updateLockDots(0);
+
+      if (Date.now() >= lockExpiry) {
+        // หมด lock แล้ว ซ่อนคำถาม
+        lockedObject = null;
+        hideQuestion();
+        updateStatus('🔍 สแกน', 'scanning');
+      }
+      return;
+    }
+
+    // ---- เลือกวัตถุที่ใกล้กลางจอมากที่สุด (Center Priority) ----
+    const selected = selectCenterObject(validPreds);
+
+    // ---- ถ้ายัง lock อยู่ ห้ามเปลี่ยนคำถาม ----
+    if (lockedObject && Date.now() < lockExpiry) {
+      updateStatus('✅ พบแล้ว', 'found');
+      return;
+    }
+
+    // ---- Debounce: ต้องเจอวัตถุเดิมต่อเนื่องก่อน ----
+    if (selected.class === candidateObject) {
+      candidateCount++;
+    } else {
+      // วัตถุเปลี่ยน reset นับ
+      candidateObject = selected.class;
+      candidateCount  = 1;
+    }
+
+    updateLockDots(candidateCount);
+
+    // ถ้าเจอครบ threshold → ล็อกและแสดงคำถาม (ส่ง prediction ด้วยเพื่อ position popup)
+    if (candidateCount >= LOCK_REQUIRED_COUNT) {
+      lockObject(selected.class, selected);
+    } else {
+      updateStatus(`🔍 ตรวจสอบ (${candidateCount}/${LOCK_REQUIRED_COUNT})`, 'scanning');
+    }
+  }, DETECTION_INTERVAL);
+}
+
+/**
+ * หยุด detection loop
+ */
+function stopDetection() {
+  if (detectionLoop) {
+    clearInterval(detectionLoop);
+    detectionLoop = null;
+  }
+  isRunning = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/**
+ * Reset state ทั้งหมด
+ */
+function resetDetectionState() {
+  candidateObject = null;
+  candidateCount  = 0;
+  lockedObject    = null;
+  lockExpiry      = 0;
+  lastQuestion    = '';
+  hideQuestion();
+  updateLockDots(0);
+}
+
+// =====================================================
+// CENTER PRIORITY DETECTION
+// =====================================================
+
+/**
+ * เลือกวัตถุที่อยู่ใกล้กลางจอที่สุด
+ * โดยคำนวณ distance จาก center ของ bounding box ไปยัง center ของ canvas
+ *
+ * @param {Array} predictions - valid predictions
+ * @returns {Object} prediction ที่เลือก
+ */
+function selectCenterObject(predictions) {
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const cx = cw / 2;
+  const cy = ch / 2;
+
+  let best     = null;
+  let bestScore = -Infinity;
+
+  predictions.forEach(pred => {
+    const [x, y, w, h] = pred.bbox;
+
+    // จุดกึ่งกลางของ bounding box
+    const bx = x + w / 2;
+    const by = y + h / 2;
+
+    // ระยะห่างจากจุดกลางจอ (normalize ด้วยขนาดจอ)
+    const dx = (bx - cx) / cw;
+    const dy = (by - cy) / ch;
+    const dist = Math.sqrt(dx * dx + dy * dy); // 0 = กลางจอ, ~0.7 = มุมจอ
+
+    // คะแนน = confidence ลบด้วย penalty ระยะห่าง
+    // ยิ่งอยู่กลาง dist น้อย คะแนนยิ่งสูง
+    const score = pred.score - dist * 0.8;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = pred;
+    }
+  });
+
+  return best;
+}
+
+/**
+ * ตรวจว่า bounding box อยู่ในโซนกลางจอหรือไม่
+ * ใช้กรองเพิ่มเติม (optional)
+ *
+ * @param {Array} bbox [x, y, w, h]
+ * @returns {boolean}
+ */
+function isInCenterZone(bbox) {
+  const [x, y, w, h] = bbox;
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const zw = cw * CENTER_ZONE_RATIO;
+  const zh = ch * CENTER_ZONE_RATIO;
+  const zx = (cw - zw) / 2;
+  const zy = (ch - zh) / 2;
+
+  const bx = x + w / 2;
+  const by = y + h / 2;
+
+  return (bx >= zx && bx <= zx + zw && by >= zy && by <= zy + zh);
+}
+
+// =====================================================
+// LOCK & QUESTION DISPLAY
+// =====================================================
+
+/**
+ * ล็อกวัตถุและแสดงคำถาม
+ * @param {string} objClass  - ชื่อวัตถุ
+ * @param {Object} pred      - prediction object (มี .bbox สำหรับ position)
+ */
+function lockObject(objClass, pred) {
+  lockedObject    = objClass;
+  lockExpiry      = Date.now() + LOCK_DURATION;
+  candidateObject = null;
+  candidateCount  = 0;
+  updateLockDots(0);
+
+  showQuestion(objClass, pred);
+  updateStatus('✅ พบแล้ว', 'found');
+}
+
+/**
+ * แสดง 3D AR Popup พร้อมคำถามที่สุ่มได้
+ * วาง popup ใกล้ตำแหน่ง bounding box ของวัตถุ
+ *
+ * @param {string} objClass  - ชื่อวัตถุ
+ * @param {Object} pred      - prediction object { bbox: [x,y,w,h], score, class }
+ */
+function showQuestion(objClass, pred) {
+  // ---- 1. สุ่มคำถาม ----
+  const q = pickQuestion(objClass, lastQuestion);
+  lastQuestion = q;
+
+  // ---- 2. อัปเดตข้อความ ----
+  popupObjectLabel.textContent = objClass;
+  popupQuestionTxt.textContent  = q;
+
+  // ---- 3. คำนวณตำแหน่ง popup ใกล้วัตถุ ----
+  positionPopup(pred);
+
+  // ---- 4. เริ่ม animation pop-in ----
+  // reset ก่อน (ในกรณีที่แสดงอยู่แล้ว)
+  questionPopup.classList.remove('pop-in', 'floating');
+  // force reflow
+  void questionPopup.offsetWidth;
+  questionPopup.classList.add('pop-in');
+  popupVisible = true;
+
+  // ---- 5. หลัง pop-in เสร็จ → สลับเป็น floating ----
+  clearTimeout(floatTimer);
+  floatTimer = setTimeout(() => {
+    if (popupVisible) {
+      questionPopup.classList.remove('pop-in');
+      questionPopup.classList.add('floating');
+    }
+  }, 600);
+}
+
+/**
+ * คำนวณและกำหนดตำแหน่ง popup ให้อยู่ใกล้ bounding box
+ * พร้อม clamp ไม่ให้หลุดออกนอกจอ
+ *
+ * @param {Object|null} pred - prediction object หรือ null (ใช้กลางจอ)
+ */
+function positionPopup(pred) {
+  const vw = videoEl.videoWidth  || 1;
+  const vh = videoEl.videoHeight || 1;
+  const cw = canvas.width  || window.innerWidth;
+  const ch = canvas.height || window.innerHeight;
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
+
+  // scale & offset สำหรับ object-fit: cover (เหมือนใน drawBoxes)
+  const scaleX  = cw / vw;
+  const scaleY  = ch / vh;
+  const scale   = Math.max(scaleX, scaleY);
+  const offsetX = (cw - vw * scale) / 2;
+  const offsetY = (ch - vh * scale) / 2;
+
+  // ขนาด popup (ประมาณ — JS ไม่รู้ความสูงก่อน render)
+  const popW = Math.min(sw * 0.78, 300);
+  const popH = 160; // ประมาณ
+
+  let targetX, targetY; // จุดอ้างอิง (มุมบนซ้ายของ popup)
+
+  if (pred && pred.bbox) {
+    const [bx, by, bw, bh] = pred.bbox;
+
+    // แปลง bbox → screen space
+    const rx = bx * scale + offsetX;
+    const ry = by * scale + offsetY;
+    const rw = bw * scale;
+    const rh = bh * scale;
+
+    // center ของ bounding box
+    const cx = rx + rw / 2;
+    const cy = ry + rh / 2;
+
+    // บันทึก bbox screen สำหรับ connector
+    lastBBoxScreen = { cx, cy, rx, ry, rw, rh };
+
+    // วาง popup เหนือวัตถุ ถ้าพื้นที่ไม่พอ → วางใต้
+    const above = ry - popH - 24;
+    if (above > 80) {
+      // เหนือวัตถุ
+      targetY = above;
+    } else {
+      // ใต้วัตถุ
+      targetY = ry + rh + 24;
+    }
+
+    // จัดกึ่งกลางแนวนอนกับ bbox
+    targetX = cx - popW / 2;
+  } else {
+    // fallback: กลางจอ
+    targetX = (sw - popW) / 2;
+    targetY = sh * 0.28;
+    lastBBoxScreen = null;
+  }
+
+  // ---- clamp ไม่ให้หลุดจอ ----
+  const margin = 14;
+  targetX = Math.max(margin, Math.min(sw - popW - margin, targetX));
+  targetY = Math.max(80, Math.min(sh - popH - margin, targetY));
+
+  // กำหนดตำแหน่ง
+  questionPopup.style.left = `${targetX}px`;
+  questionPopup.style.top  = `${targetY}px`;
+
+  // ---- อัปเดต connector line ----
+  updateConnector(targetX, targetY, popW, popH);
+}
+
+/**
+ * วาดเส้นเชื่อม connector จาก popup ไปยัง bounding box
+ */
+function updateConnector(popX, popY, popW, popH) {
+  if (!lastBBoxScreen || !connectorLine) return;
+
+  const { cx: bx, cy: by } = lastBBoxScreen;
+
+  // จุดเริ่มจาก center-bottom ของ popup หรือ center-top
+  // เลือกด้านที่ใกล้กับ bbox มากกว่า
+  const popCX = popX + popW / 2;
+  const popCY = popY + popH / 2;
+
+  // ปลาย connector ที่ popup
+  const px = popCX;
+  const py = (by < popY) ? popY : popY + popH; // ขอบที่หันหา bbox
+
+  connectorLine.setAttribute('x1', String(px));
+  connectorLine.setAttribute('y1', String(py));
+  connectorLine.setAttribute('x2', String(bx));
+  connectorLine.setAttribute('y2', String(by));
+  connectorLine.setAttribute('opacity', '0.5');
+}
+
+/**
+ * ซ่อน 3D popup
+ */
+function hideQuestion() {
+  questionPopup.classList.remove('pop-in', 'floating');
+  questionPopup.style.opacity = '0';
+  clearTimeout(floatTimer);
+  popupVisible   = false;
+  lastBBoxScreen = null;
+
+  // ซ่อน connector
+  if (connectorLine) {
+    connectorLine.setAttribute('opacity', '0');
+  }
+}
+
+// =====================================================
+// STATUS & UI HELPERS
+// =====================================================
+
+/**
+ * อัปเดต badge สถานะ
+ * @param {string} text  - ข้อความ
+ * @param {string} cls   - 'ready' | 'scanning' | 'found' | ''
+ */
+function updateStatus(text, cls) {
+  statusBadge.textContent = text;
+  statusBadge.className = '';   // reset
+  if (cls) statusBadge.classList.add(cls);
+}
+
+/**
+ * อัปเดตจุด lock indicator
+ * @param {number} count - 0-3
+ */
+function updateLockDots(count) {
+  // แสดง indicator เฉพาะเมื่อกำลังนับ
+  if (count > 0 && count < LOCK_REQUIRED_COUNT) {
+    lockIndicator.classList.add('visible');
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i < count);
+    });
+  } else {
+    lockIndicator.classList.remove('visible');
+    dots.forEach(d => d.classList.remove('active'));
+  }
+}
+
+// =====================================================
+// CANVAS & BOUNDING BOX DRAWING
+// =====================================================
+
+/**
+ * ปรับขนาด canvas ให้ตรงกับ viewport
+ */
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+/**
+ * วาด bounding box สำหรับทุก predictions
+ * @param {Array} predictions
+ */
+function drawBoxes(predictions) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!predictions || predictions.length === 0) return;
+
+  const vw = videoEl.videoWidth   || 1;
+  const vh = videoEl.videoHeight  || 1;
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  // คำนวณ scale และ offset สำหรับ object-fit: cover
+  // (วิดีโออาจถูก crop เพื่อเต็มจอ)
+  const scaleX = cw / vw;
+  const scaleY = ch / vh;
+  const scale  = Math.max(scaleX, scaleY);   // cover = ใช้ scale ที่ใหญ่กว่า
+
+  const offsetX = (cw - vw * scale) / 2;
+  const offsetY = (ch - vh * scale) / 2;
+
+  // เลือกวัตถุกลางจอสำหรับ highlight
+  const selected = selectCenterObject(predictions);
+
+  predictions.forEach(pred => {
+    const [x, y, w, h] = pred.bbox;
+    const isSelected = (pred === selected);
+
+    // แปลง coordinate จาก video space → canvas space
+    const rx = x * scale + offsetX;
+    const ry = y * scale + offsetY;
+    const rw = w * scale;
+    const rh = h * scale;
+
+    // เลือกสี: วัตถุที่เลือก = เขียวสว่าง, อื่นๆ = โปร่งแสง
+    const color = isSelected ? '#00ffe0' : 'rgba(255,255,255,0.35)';
+    const lw    = isSelected ? 2.5 : 1.5;
+
+    // วาดกรอบ
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = lw;
+    ctx.shadowColor = isSelected ? 'rgba(0,255,224,0.6)' : 'transparent';
+    ctx.shadowBlur  = isSelected ? 8 : 0;
+    ctx.strokeRect(rx, ry, rw, rh);
+
+    // วาด label บน bounding box
+    const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
+    ctx.font         = `bold ${isSelected ? 14 : 12}px Prompt, sans-serif`;
+    ctx.fillStyle    = color;
+    ctx.shadowColor  = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur   = 4;
+
+    const textY = ry > 24 ? ry - 8 : ry + rh + 18;
+    ctx.fillText(label, rx + 4, textY);
+
+    // reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+  });
+}
+
+// =====================================================
+// LOADING OVERLAY HELPERS
+// =====================================================
+
+function showLoadingOverlay(msg) {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = '';
+  overlay.classList.remove('fade-out');
+  setLoadingMsg(msg);
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('fade-out');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 600);
+}
+
+function setLoadingMsg(msg) {
+  document.getElementById('loadingMsg').textContent = msg;
+}
+
+// =====================================================
+// INIT: โหลดหน้าเว็บ
+// =====================================================
+
+window.addEventListener('load', () => {
+  // ซ่อน loading overlay หลังจาก DOM พร้อม
+  setTimeout(() => {
+    hideLoadingOverlay();
+    // ซ่อน loading overlay ไว้ ให้แสดงเฉพาะตอนเปิดกล้อง
+  }, 800);
+});
+
+// ป้องกัน scroll และ zoom บนมือถือ
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+</script>
+
+</body>
+</html>    /* ===================================================
+       MENU PAGE
+    =================================================== */
+    #menuPage {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,224,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,79,202,0.10) 0%, transparent 70%),
+        var(--bg);
+      padding: 32px 24px;
+      gap: 0;
+    }
+
+    /* Grid noise overlay สำหรับ texture */
+    #menuPage::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Ccircle cx='30' cy='30' r='0.5' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .menu-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    /* ไอคอน / โลโก้ */
+    .menu-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(0,255,224,0.15), rgba(255,79,202,0.15));
+      border: 1.5px solid rgba(0,255,224,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 0 40px rgba(0,255,224,0.15);
+      animation: iconPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(0,255,224,0.15); }
+      50%       { box-shadow: 0 0 60px rgba(0,255,224,0.30); }
+    }
+
+    /* ชื่อเว็บหลัก */
+    .menu-title {
+      font-family: var(--font-en);
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      text-align: center;
+      line-height: 1.1;
+      background: linear-gradient(120deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .menu-subtitle {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* คำอธิบาย */
+    .menu-desc {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      font-size: 14.5px;
+      line-height: 1.75;
+      color: rgba(232,232,240,0.75);
+      text-align: center;
+      width: 100%;
+    }
+
+    .menu-desc strong {
+      color: var(--accent);
+    }
+
+    /* Feature chips */
+    .menu-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .chip {
+      background: rgba(0,255,224,0.06);
+      border: 1px solid rgba(0,255,224,0.18);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ปุ่มเริ่ม */
+    .btn-start {
+      width: 100%;
+      max-width: 320px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, var(--accent) 0%, #00c9b1 100%);
+      color: #0a0a0f;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-th);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,255,224,0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-start:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 16px rgba(0,255,224,0.20);
+    }
+
+    .btn-start .btn-icon {
+      font-size: 20px;
+    }
+
+    /* Footer note */
+    .menu-footer {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ===================================================
+       CAMERA PAGE
+    =================================================== */
+    #cameraPage {
+      background: #000;
+      padding: 0;
+    }
+
+    /* ===== วิดีโอเต็มหน้าจอ ===== */
+    #videoEl {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* กระจกซ้าย-ขวาเฉพาะกล้องหน้า — กล้องหลังไม่พลิก */
+      transform: scaleX(1);
+      z-index: 0;
+    }
+
+    /* Canvas สำหรับวาด bounding box ทับวิดีโอ */
+    #overlayCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ===== AR UI Layer ===== */
+    .ar-ui {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0;
+    }
+
+    /* ---- Top Bar ---- */
+    .ar-topbar {
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      background: linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, transparent 100%);
+    }
+
+    .btn-back {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
+      color: #fff;
+      font-family: var(--font-th);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+
+    .btn-back:active { background: rgba(0,0,0,0.80); }
+
+    .ar-brand {
+      font-family: var(--font-en);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--accent);
+      text-shadow: 0 0 12px rgba(0,255,224,0.6);
+    }
+
+    /* สถานะ AI — มุมบนขวา */
+    #statusBadge {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      color: var(--warn);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 7px 13px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: color 0.3s, border-color 0.3s;
+      white-space: nowrap;
+    }
+
+    #statusBadge.ready    { color: var(--accent);  border-color: rgba(0,255,224,0.30); }
+    #statusBadge.scanning { color: var(--muted);   border-color: rgba(255,255,255,0.10); }
+    #statusBadge.found    { color: #7fff7f;         border-color: rgba(127,255,127,0.30); }
+
+    /* ---- กรอบกลางจอ (Center Zone Guide) ---- */
+    .center-guide {
+      position: fixed;
+      /* จัดกึ่งกลาง */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(55vw, 220px);
+      height: min(55vw, 220px);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* มุมสี่มุมของกรอบ */
+    .center-guide::before,
+    .center-guide::after,
+    .cg-br,
+    .cg-bl {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: rgba(0,255,224,0.65);
+      border-style: solid;
+      border-width: 0;
+    }
+
+    .center-guide::before {
+      top: 0; left: 0;
+      border-top-width: 3px;
+      border-left-width: 3px;
+      border-radius: 4px 0 0 0;
+    }
+
+    .center-guide::after {
+      top: 0; right: 0;
+      border-top-width: 3px;
+      border-right-width: 3px;
+      border-radius: 0 4px 0 0;
+    }
+
+    .cg-br {
+      bottom: 0; right: 0;
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+      border-radius: 0 0 4px 0;
+    }
+
+    .cg-bl {
+      bottom: 0; left: 0;
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+      border-radius: 0 0 0 4px;
+    }
+
+    /* hint ข้างล่างกรอบ */
+    .center-hint {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(0,255,224,0.55);
+      white-space: nowrap;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
     /* ---- Question Card ---- */
     .ar-bottom {
       padding: 16px 18px;
