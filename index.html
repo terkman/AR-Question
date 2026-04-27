@@ -1,984 +1,1437 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AR Open Question Collector</title>
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>AR Open Question</title>
 
-  <!-- TensorFlow.js + COCO-SSD สำหรับตรวจจับวัตถุ -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <!-- TensorFlow.js และ COCO-SSD สำหรับตรวจจับวัตถุ -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
-  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <!-- Google Fonts: Prompt (Thai) + Syne (Display) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 
   <style>
-    /* ─── CSS Variables ─────────────────────────────────── */
-    :root {
-      --bg:       #0a0e17;
-      --surface:  #111827;
-      --card:     #1a2235;
-      --border:   #2a3a55;
-      --accent:   #00e5ff;
-      --accent2:  #7b61ff;
-      --success:  #00e096;
-      --warn:     #ffb547;
-      --danger:   #ff4f6e;
-      --text:     #e8edf5;
-      --muted:    #5b6f8a;
-      --radius:   18px;
-      --radius-sm:10px;
+    /* ===== CSS VARIABLES & RESET ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    /* ─── Reset & Base ──────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #13131a;
+      --accent:    #00ffe0;
+      --accent2:   #ff4fca;
+      --warn:      #ffb800;
+      --text:      #e8e8f0;
+      --muted:     #6b6b80;
+      --radius:    16px;
+      --font-th:   'Prompt', sans-serif;
+      --font-en:   'Syne', sans-serif;
+    }
+
     html, body {
+      width: 100%;
       height: 100%;
+      overflow: hidden;
       background: var(--bg);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
+      font-family: var(--font-th);
       -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
     }
 
-    /* ─── Background mesh ───────────────────────────────── */
-    body::before {
+    /* ===== PAGE SYSTEM: ซ่อน/แสดงหน้าด้วย class ===== */
+    .page {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .page.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.97);
+    }
+
+    /* ===================================================
+       MENU PAGE
+    =================================================== */
+    #menuPage {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,224,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,79,202,0.10) 0%, transparent 70%),
+        var(--bg);
+      padding: 32px 24px;
+      gap: 0;
+    }
+
+    /* Grid noise overlay สำหรับ texture */
+    #menuPage::before {
       content: '';
       position: fixed;
       inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(0,229,255,.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 90% 110%, rgba(123,97,255,.14) 0%, transparent 55%);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Ccircle cx='30' cy='30' r='0.5' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E");
       pointer-events: none;
       z-index: 0;
     }
 
-    /* ─── Layout ────────────────────────────────────────── */
-    #app {
+    .menu-inner {
       position: relative;
       z-index: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      min-height: 100dvh;
-      padding: 20px 16px 36px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      align-items: center;
+      gap: 28px;
+      max-width: 400px;
+      width: 100%;
     }
 
-    /* ─── Header ────────────────────────────────────────── */
-    header {
+    /* ไอคอน / โลโก้ */
+    .menu-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(0,255,224,0.15), rgba(255,79,202,0.15));
+      border: 1.5px solid rgba(0,255,224,0.3);
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 0 40px rgba(0,255,224,0.15);
+      animation: iconPulse 3s ease-in-out infinite;
     }
-    .logo-icon {
-      width: 42px; height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-      box-shadow: 0 0 20px rgba(0,229,255,.3);
+
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(0,255,224,0.15); }
+      50%       { box-shadow: 0 0 60px rgba(0,255,224,0.30); }
     }
-    .header-text h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.15rem;
+
+    /* ชื่อเว็บหลัก */
+    .menu-title {
+      font-family: var(--font-en);
+      font-size: 32px;
       font-weight: 800;
-      letter-spacing: -.3px;
-      line-height: 1.2;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      letter-spacing: -0.5px;
+      text-align: center;
+      line-height: 1.1;
+      background: linear-gradient(120deg, var(--accent) 0%, var(--accent2) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .header-text p {
-      font-size: .75rem;
+
+    .menu-subtitle {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
       color: var(--muted);
-      margin-top: 1px;
+      text-align: center;
     }
 
-    /* ─── Warning Banner ────────────────────────────────── */
-    .banner {
-      background: rgba(255,181,71,.1);
-      border: 1px solid rgba(255,181,71,.35);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      font-size: .82rem;
-      color: var(--warn);
-      display: flex; gap: 10px; align-items: flex-start;
-    }
-    .banner span { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
-    .banner.hidden { display: none; }
-
-    /* ─── Camera Card ───────────────────────────────────── */
-    .camera-card {
+    /* คำอธิบาย */
+    .menu-desc {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: var(--radius);
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* กรอบกล้อง 4:3 */
-    .camera-wrap {
-      position: relative;
+      padding: 20px 22px;
+      font-size: 14.5px;
+      line-height: 1.75;
+      color: rgba(232,232,240,0.75);
+      text-align: center;
       width: 100%;
-      padding-bottom: 75%; /* 4:3 */
-      background: #070b12;
-      overflow: hidden;
     }
-    .camera-wrap video,
-    .camera-wrap canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    /* canvas ซ้อนทับ video */
-    #overlay { z-index: 2; }
 
-    /* Placeholder ตอนยังไม่เปิดกล้อง */
-    #camera-placeholder {
-      position: absolute;
-      inset: 0;
+    .menu-desc strong {
+      color: var(--accent);
+    }
+
+    /* Feature chips */
+    .menu-chips {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .chip {
+      background: rgba(0,255,224,0.06);
+      border: 1px solid rgba(0,255,224,0.18);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ปุ่มเริ่ม */
+    .btn-start {
+      width: 100%;
+      max-width: 320px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, var(--accent) 0%, #00c9b1 100%);
+      color: #0a0a0f;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-th);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,255,224,0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-start:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 16px rgba(0,255,224,0.20);
+    }
+
+    .btn-start .btn-icon {
+      font-size: 20px;
+    }
+
+    /* Footer note */
+    .menu-footer {
+      font-size: 11px;
       color: var(--muted);
-      font-size: .85rem;
-    }
-    #camera-placeholder .cam-icon { font-size: 2.8rem; }
-    #camera-placeholder.hidden { display: none; }
-
-    /* Status pill */
-    .status-pill {
-      position: absolute;
-      top: 10px; left: 10px;
-      z-index: 3;
-      background: rgba(10,14,23,.75);
-      backdrop-filter: blur(6px);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 10px;
-      font-size: .72rem;
-      color: var(--muted);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .status-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: background .3s;
-    }
-    .status-dot.live { background: var(--danger); animation: blink 1.2s infinite; }
-    .status-dot.detecting { background: var(--accent); }
-
-    @keyframes blink {
-      0%,100% { opacity: 1; }
-      50%      { opacity: .3; }
+      text-align: center;
+      line-height: 1.6;
     }
 
-    /* ─── Camera Controls ───────────────────────────────── */
-    .cam-controls {
-      padding: 14px 16px;
+    /* ===================================================
+       CAMERA PAGE
+    =================================================== */
+    #cameraPage {
+      background: #000;
+      padding: 0;
+    }
+
+    /* ===== วิดีโอเต็มหน้าจอ ===== */
+    #videoEl {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* กระจกซ้าย-ขวาเฉพาะกล้องหน้า — กล้องหลังไม่พลิก */
+      transform: scaleX(1);
+      z-index: 0;
+    }
+
+    /* Canvas สำหรับวาด bounding box ทับวิดีโอ */
+    #overlayCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ===== AR UI Layer ===== */
+    .ar-ui {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0;
+    }
+
+    /* ---- Top Bar ---- */
+    .ar-topbar {
+      pointer-events: all;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      padding: 16px 18px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      background: linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, transparent 100%);
     }
-    .cam-info {
-      font-size: .8rem;
-      color: var(--muted);
-    }
-    .cam-info strong { color: var(--text); font-weight: 600; }
 
-    /* ─── Buttons ───────────────────────────────────────── */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 7px;
-      border: none; cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 600;
-      font-size: .9rem;
-      border-radius: 12px;
-      padding: 12px 22px;
-      transition: all .2s ease;
-      position: relative;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .45; cursor: not-allowed; }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    .btn-back {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
       color: #fff;
-      box-shadow: 0 4px 20px rgba(0,229,255,.25);
-    }
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 6px 28px rgba(0,229,255,.4);
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: rgba(255,79,110,.15);
-      border: 1px solid rgba(255,79,110,.4);
-      color: var(--danger);
-    }
-    .btn-danger:hover:not(:disabled) { background: rgba(255,79,110,.25); }
-
-    .btn-success {
-      background: linear-gradient(135deg, #00c479, var(--success));
-      color: #fff;
-      width: 100%;
-      font-size: 1rem;
-      padding: 15px;
-      border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(0,224,150,.2);
-    }
-    .btn-success:hover:not(:disabled) { box-shadow: 0 6px 28px rgba(0,224,150,.35); transform: translateY(-1px); }
-
-    .btn-sm { padding: 8px 14px; font-size: .82rem; border-radius: 9px; }
-
-    /* ─── Error Box ─────────────────────────────────────── */
-    #cam-error {
-      margin: 0 16px 14px;
-      background: rgba(255,79,110,.1);
-      border: 1px solid rgba(255,79,110,.3);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      font-size: .82rem;
-      color: var(--danger);
-      display: none;
-    }
-
-    /* ─── Detection Result ──────────────────────────────── */
-    #detection-panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      display: none;
-      flex-direction: column;
-      gap: 18px;
-      animation: slideUp .35s ease;
-    }
-    #detection-panel.show { display: flex; }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .detected-label {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .detected-label .obj-badge {
-      background: linear-gradient(135deg, rgba(0,229,255,.18), rgba(123,97,255,.18));
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 4px 12px;
-      font-size: .78rem;
+      font-family: var(--font-th);
+      font-size: 13px;
       font-weight: 600;
+      padding: 9px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+
+    .btn-back:active { background: rgba(0,0,0,0.80); }
+
+    .ar-brand {
+      font-family: var(--font-en);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
       color: var(--accent);
-      letter-spacing: .4px;
-      text-transform: uppercase;
-    }
-    .detected-label .conf-text {
-      font-size: .75rem;
-      color: var(--muted);
-      margin-left: auto;
+      text-shadow: 0 0 12px rgba(0,255,224,0.6);
     }
 
-    /* คำถาม */
-    .question-box {
-      background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(123,97,255,.06));
-      border-left: 3px solid var(--accent2);
-      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      padding: 14px 16px;
-    }
-    .question-label {
-      font-size: .7rem;
+    /* สถานะ AI — มุมบนขวา */
+    #statusBadge {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      color: var(--warn);
+      font-size: 11px;
       font-weight: 600;
-      color: var(--accent2);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      margin-bottom: 6px;
-    }
-    #question-text {
-      font-size: 1.05rem;
-      font-weight: 500;
-      line-height: 1.5;
-      color: var(--text);
-    }
-
-    /* ─── Form ──────────────────────────────────────────── */
-    .form-group { display: flex; flex-direction: column; gap: 7px; }
-    .form-group label {
-      font-size: .78rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .6px;
-    }
-    .form-group input,
-    .form-group textarea {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: .95rem;
-      padding: 12px 14px;
-      width: 100%;
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      resize: none;
-    }
-    .form-group input::placeholder,
-    .form-group textarea::placeholder { color: var(--muted); }
-    .form-group input:focus,
-    .form-group textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,229,255,.12);
-    }
-
-    /* ─── Toast ─────────────────────────────────────────── */
-    #toast {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 22px;
-      font-size: .88rem;
-      color: var(--text);
-      box-shadow: 0 8px 32px rgba(0,0,0,.5);
-      z-index: 999;
-      transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s;
-      opacity: 0;
+      padding: 7px 13px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: color 0.3s, border-color 0.3s;
       white-space: nowrap;
-      max-width: 90vw;
-      text-align: center;
     }
-    #toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    #toast.success { border-color: rgba(0,224,150,.4); color: var(--success); }
-    #toast.error   { border-color: rgba(255,79,110,.4); color: var(--danger); }
 
-    /* ─── Loading spinner ───────────────────────────────── */
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2.5px solid rgba(255,255,255,.25);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    #statusBadge.ready    { color: var(--accent);  border-color: rgba(0,255,224,0.30); }
+    #statusBadge.scanning { color: var(--muted);   border-color: rgba(255,255,255,0.10); }
+    #statusBadge.found    { color: #7fff7f;         border-color: rgba(127,255,127,0.30); }
 
-    /* ─── Model Loading Overlay ──────────────────────────── */
-    #model-overlay {
+    /* ---- กรอบกลางจอ (Center Zone Guide) ---- */
+    .center-guide {
+      position: fixed;
+      /* จัดกึ่งกลาง */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(55vw, 220px);
+      height: min(55vw, 220px);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* มุมสี่มุมของกรอบ */
+    .center-guide::before,
+    .center-guide::after,
+    .cg-br,
+    .cg-bl {
+      content: '';
       position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: rgba(0,255,224,0.65);
+      border-style: solid;
+      border-width: 0;
+    }
+
+    .center-guide::before {
+      top: 0; left: 0;
+      border-top-width: 3px;
+      border-left-width: 3px;
+      border-radius: 4px 0 0 0;
+    }
+
+    .center-guide::after {
+      top: 0; right: 0;
+      border-top-width: 3px;
+      border-right-width: 3px;
+      border-radius: 0 4px 0 0;
+    }
+
+    .cg-br {
+      bottom: 0; right: 0;
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+      border-radius: 0 0 4px 0;
+    }
+
+    .cg-bl {
+      bottom: 0; left: 0;
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+      border-radius: 0 0 0 4px;
+    }
+
+    /* hint ข้างล่างกรอบ */
+    .center-hint {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(0,255,224,0.55);
+      white-space: nowrap;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ---- Question Card ---- */
+    .ar-bottom {
+      padding: 16px 18px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.40) 70%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* การ์ดคำถาม */
+    #questionCard {
+      background: rgba(10,10,15,0.75);
+      border: 1px solid rgba(0,255,224,0.25);
+      border-radius: 18px;
+      padding: 18px 20px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,255,224,0.08) inset;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      transform: translateY(0);
+    }
+
+    #questionCard.hidden {
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+    }
+
+    /* แท็กชื่อวัตถุ */
+    .q-object-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,255,224,0.12);
+      border: 1px solid rgba(0,255,224,0.25);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .q-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: dotBlink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ข้อความคำถาม */
+    #questionText {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #fff;
+      letter-spacing: 0.1px;
+    }
+
+    /* หมายเหตุ */
+    .q-note {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.35);
+      font-weight: 400;
+    }
+
+    /* ===== ตัวนับ confidence / lock indicator ===== */
+    #lockIndicator {
+      position: fixed;
+      top: 50%;
+      right: 18px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #lockIndicator.visible { opacity: 1; }
+
+    .lock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.2s;
+    }
+
+    .lock-dot.active { background: var(--accent); }
+
+    /* Loading overlay ขณะโหลด AI */
+    #loadingOverlay {
+      position: fixed;
       inset: 0;
-      background: rgba(10,14,23,.82);
-      backdrop-filter: blur(4px);
-      z-index: 10;
+      background: var(--bg);
+      z-index: 100;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      border-radius: var(--radius);
+      gap: 20px;
+      transition: opacity 0.5s ease;
     }
-    #model-overlay p { font-size: .85rem; color: var(--muted); }
-    #model-overlay.hidden { display: none; }
 
-    /* ─── Scanning line animation ────────────────────────── */
-    .scan-line {
-      position: absolute;
-      left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      z-index: 4;
-      animation: scanMove 2.5s ease-in-out infinite;
-      opacity: .7;
+    #loadingOverlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
     }
-    @keyframes scanMove {
-      0%   { top: 0; }
-      100% { top: 100%; }
-    }
-    .scan-line.hidden { display: none; }
 
-    /* ─── Corner Brackets ───────────────────────────────── */
-    .corner {
-      position: absolute;
-      width: 22px; height: 22px;
-      z-index: 5;
-      opacity: .6;
+    .loading-spinner {
+      width: 52px;
+      height: 52px;
+      border: 3px solid rgba(0,255,224,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
     }
-    .corner.tl { top: 8px; left: 8px;  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .corner.tr { top: 8px; right: 8px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
-    .corner.bl { bottom: 8px; left: 8px;  border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .corner.br { bottom: 8px; right: 8px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
 
-    /* ─── Footer ────────────────────────────────────────── */
-    footer {
-      text-align: center;
-      font-size: .72rem;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 14px;
       color: var(--muted);
-      margin-top: auto;
-      padding-top: 10px;
+      font-weight: 400;
+    }
+
+    .loading-logo {
+      font-family: var(--font-en);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    /* ===== Responsive: ป้องกันหน้าจอที่กว้างมาก ===== */
+    @media (min-width: 500px) {
+      .menu-inner { max-width: 420px; }
     }
   </style>
 </head>
 <body>
 
-<div id="app">
-
-  <!-- ── Header ── -->
-  <header>
-    <div class="logo-icon">🔍</div>
-    <div class="header-text">
-      <h1>AR Question Collector</h1>
-      <p>Point camera · Detect · Answer</p>
-    </div>
-  </header>
-
-  <!-- ── Warning: ยังไม่ได้ตั้งค่า URL ── -->
-  <div class="banner" id="url-warning">
-    <span>⚠️</span>
-    <div>
-      <strong>Setup Required:</strong> กรุณาใส่ Google Apps Script URL ในตัวแปร <code>GOOGLE_SCRIPT_URL</code> ภายในไฟล์ JavaScript ก่อนใช้งาน
-    </div>
-  </div>
-
-  <!-- ── Camera Card ── -->
-  <div class="camera-card">
-
-    <!-- Model loading overlay -->
-    <div id="model-overlay">
-      <div class="spinner"></div>
-      <p>กำลังโหลด AI Model...</p>
-    </div>
-
-    <!-- กรอบกล้อง 4:3 -->
-    <div class="camera-wrap">
-      <!-- Corner brackets -->
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
-
-      <!-- Scanning animation -->
-      <div class="scan-line hidden" id="scan-line"></div>
-
-      <!-- Status pill -->
-      <div class="status-pill">
-        <div class="status-dot" id="status-dot"></div>
-        <span id="status-text">ยังไม่เปิดกล้อง</span>
-      </div>
-
-      <!-- Placeholder -->
-      <div id="camera-placeholder">
-        <div class="cam-icon">📷</div>
-        <p>กดปุ่มด้านล่างเพื่อเริ่มใช้กล้อง</p>
-      </div>
-
-      <!-- Video + Canvas -->
-      <video id="video" autoplay playsinline muted style="display:none;"></video>
-      <canvas id="overlay"></canvas>
-    </div>
-
-    <!-- Error box -->
-    <div id="cam-error"></div>
-
-    <!-- Controls -->
-    <div class="cam-controls">
-      <div class="cam-info">
-        <span id="cam-info-text">AI พร้อมใช้งาน</span>
-      </div>
-      <button class="btn btn-primary" id="start-btn" disabled>
-        <span>📷</span> เริ่มเปิดกล้อง
-      </button>
-      <button class="btn btn-danger btn-sm" id="stop-btn" style="display:none;">
-        หยุด
-      </button>
-    </div>
-  </div>
-
-  <!-- ── Detection & Question Panel ── -->
-  <div id="detection-panel">
-    <div class="detected-label">
-      <span class="obj-badge" id="obj-badge">—</span>
-      <span class="conf-text" id="conf-text"></span>
-    </div>
-
-    <div class="question-box">
-      <div class="question-label">📝 Open Question</div>
-      <div id="question-text">—</div>
-    </div>
-
-    <div class="form-group">
-      <label for="name-input">ชื่อผู้ตอบ</label>
-      <input type="text" id="name-input" placeholder="กรอกชื่อของคุณ..." maxlength="80" />
-    </div>
-
-    <div class="form-group">
-      <label for="answer-input">คำตอบของคุณ</label>
-      <textarea id="answer-input" rows="4" placeholder="พิมพ์คำตอบที่นี่..."></textarea>
-    </div>
-
-    <button class="btn btn-success" id="submit-btn">
-      ✅ ส่งคำตอบ
-    </button>
-  </div>
-
-  <footer>AR Open Question Collector · Powered by TensorFlow.js COCO-SSD</footer>
+<!-- ===================================================
+     LOADING OVERLAY (แสดงขณะโหลด AI)
+=================================================== -->
+<div id="loadingOverlay">
+  <div class="loading-logo">AR Question</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingMsg">กำลังเตรียมระบบ...</div>
 </div>
 
-<!-- Toast notification -->
-<div id="toast"></div>
+<!-- ===================================================
+     PAGE 1: MENU PAGE
+=================================================== -->
+<div class="page" id="menuPage">
+  <div class="menu-inner">
 
-<!-- ═══════════════════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════════════════ -->
+    <!-- ไอคอน -->
+    <div class="menu-icon">🔍</div>
+
+    <!-- ชื่อเว็บ -->
+    <div>
+      <div class="menu-title">AR Open Question</div>
+      <div class="menu-subtitle">AI Camera · Object Detection</div>
+    </div>
+
+    <!-- คำอธิบาย -->
+    <div class="menu-desc">
+      ส่องกล้องไปที่วัตถุรอบตัว<br/>
+      AI จะ<strong>ตรวจจับวัตถุ</strong>และสร้าง<br/>
+      <strong>คำถามปลายเปิด</strong>ขึ้นมาให้คุณคิด
+    </div>
+
+    <!-- Feature chips -->
+    <div class="menu-chips">
+      <span class="chip">🤖 TensorFlow.js</span>
+      <span class="chip">📷 กล้องหลัง</span>
+      <span class="chip">🧠 COCO-SSD</span>
+      <span class="chip">✨ AR Overlay</span>
+    </div>
+
+    <!-- ปุ่มเริ่ม -->
+    <button class="btn-start" id="btnStart" onclick="startCamera()">
+      <span class="btn-icon">📷</span>
+      เริ่มเปิดกล้อง
+    </button>
+
+    <!-- หมายเหตุ -->
+    <div class="menu-footer">
+      ต้องการอนุญาตใช้กล้อง · ไม่บันทึกข้อมูลใดๆ<br/>
+      รองรับ Android และ iOS
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================================================
+     PAGE 2: CAMERA PAGE
+=================================================== -->
+<div class="page hidden" id="cameraPage">
+
+  <!-- วิดีโอ feed -->
+  <video id="videoEl" autoplay playsinline muted></video>
+
+  <!-- Canvas สำหรับ bounding box -->
+  <canvas id="overlayCanvas"></canvas>
+
+  <!-- AR UI Layer -->
+  <div class="ar-ui">
+
+    <!-- Top Bar -->
+    <div class="ar-topbar">
+      <button class="btn-back" onclick="goBack()">
+        ← กลับ
+      </button>
+      <div class="ar-brand">AR·Q</div>
+      <div id="statusBadge">⏳ โหลด AI</div>
+    </div>
+
+    <!-- กรอบ Center Zone Guide -->
+    <div class="center-guide">
+      <div class="cg-br"></div>
+      <div class="cg-bl"></div>
+      <div class="center-hint">วางวัตถุไว้ที่นี่</div>
+    </div>
+
+    <!-- Bottom: Question Card -->
+    <div class="ar-bottom">
+      <div id="questionCard" class="hidden">
+        <div class="q-object-tag">
+          <div class="q-dot"></div>
+          <span id="objectLabel">วัตถุ</span>
+        </div>
+        <div id="questionText">คำถามจะแสดงที่นี่</div>
+        <div class="q-note">💭 คิดคำตอบในใจแล้วส่องวัตถุถัดไป</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Lock Indicator (จุดนับ confidence ต่อเนื่อง) -->
+  <div id="lockIndicator">
+    <div class="lock-dot" id="dot0"></div>
+    <div class="lock-dot" id="dot1"></div>
+    <div class="lock-dot" id="dot2"></div>
+  </div>
+
+</div>
+
+<!-- ===================================================
+     JAVASCRIPT: AI + CAMERA LOGIC
+=================================================== -->
 <script>
-"use strict";
-
-/* ─────────────────────────────────────────────────────
-   🔧 CONFIG — แก้ค่านี้ให้เป็น URL จาก Google Apps Script
-   ───────────────────────────────────────────────────── */
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz707C-O-CE6q5DkBtSi6ixCFHiPg-OGQ1XoUVqNBgM5yLs54XntHH-sv5XTCEpsecu/exec";
-
-/* ─────────────────────────────────────────────────────
-   📋 QUESTION BANK
-   คีย์ = ชื่อ class ที่ COCO-SSD ส่งกลับมา (ภาษาอังกฤษ)
-   value = array ของคำถามปลายเปิด
-   ───────────────────────────────────────────────────── */
+// =====================================================
+// QUESTION BANK: วัตถุ → คำถามปลายเปิด
+// =====================================================
 const QUESTION_BANK = {
-  "cell phone": [
-    "How do you use this object?",
-    "When do you usually use this object?",
-    "Why is this object useful?"
+  'cell phone': [
+    'How do you use this object?',
+    'When do you usually use this object?',
+    'Why is this object useful?',
+    'What would life be like without this device?',
+    'How has this object changed the way people communicate?'
   ],
-  "cup": [
-    "What do you use this for?",
-    "What can you put inside this object?",
-    "Where do you usually see this object?"
+  'cup': [
+    'What do you use this for?',
+    'What can you put inside this object?',
+    'Where do you usually see this object?',
+    'What material is this object made of?',
+    'How does this object make your daily life easier?'
   ],
-  "chair": [
-    "What do you use this object for?",
-    "Where do people usually use this object?",
-    "Describe how you use this object."
+  'chair': [
+    'What do you use this object for?',
+    'Where do people usually use this object?',
+    'Describe how you use this object.',
+    'Who might need this object the most?',
+    'What would happen if this object did not exist?'
   ],
-  "book": [
-    "What can you learn from this object?",
-    "When do you usually use this object?",
-    "Why is this object important?"
+  'book': [
+    'What can you learn from this object?',
+    'When do you usually use this object?',
+    'Why is this object important?',
+    'What kind of book do you enjoy reading?',
+    'How has reading a book changed your thinking?'
   ],
-  "bottle": [
-    "What do you usually put in this object?",
-    "Where do you carry this object?",
-    "How do you use this object?"
+  'bottle': [
+    'What do you usually put in this object?',
+    'Where do you carry this object?',
+    'How do you use this object?',
+    'Why is staying hydrated important?',
+    'Describe a time when this object was very useful.'
   ],
-  "laptop": [
-    "What do you use a laptop for?",
-    "When do you use this object?",
-    "Why is this object useful?"
+  'laptop': [
+    'What do you use a laptop for?',
+    'When do you use this object?',
+    'Why is this object useful?',
+    'How has this device changed the way people work?',
+    'What can you do on a laptop that you cannot do on a phone?'
   ],
-  "keyboard": [
-    "What do you use this keyboard for?",
-    "When do you type on a keyboard?",
-    "Describe this object."
+  'keyboard': [
+    'What do you use this keyboard for?',
+    'When do you type on a keyboard?',
+    'Describe this object.',
+    'How would your work change without a keyboard?',
+    'What skills do you need to use this object well?'
   ],
-  "mouse": [
-    "What do you use this mouse for?",
-    "How does this object help you?",
-    "Where do you usually see this object?"
+  'mouse': [
+    'What do you use this mouse for?',
+    'How does this object help you?',
+    'Where do you usually see this object?',
+    'Describe how a mouse works.',
+    'Do you prefer a mouse or a touchpad? Why?'
   ],
-  "person": [
-    "What is this person doing?",
-    "Describe this person in one sentence.",
-    "Where do you think this person is?"
+  'person': [
+    'What is this person doing?',
+    'Describe this person in one sentence.',
+    'Where do you think this person is?',
+    'What do you think this person is thinking about?',
+    'How would you describe the expression on this person\'s face?'
+  ],
+  'tv': [
+    'What do you watch on this device?',
+    'How does this object entertain you?',
+    'How has television changed over the years?',
+    'What kind of program do you enjoy watching?',
+    'Do you think television is still important today?'
+  ],
+  'remote': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'Which device does this remote control?'
+  ],
+  'couch': [
+    'Where do you usually find this object?',
+    'How does this object make you feel?',
+    'Describe a moment when this object was very comfortable.'
+  ],
+  'sofa': [
+    'Where do you usually find this object?',
+    'How does this object make you feel?',
+    'Why is comfortable furniture important at home?'
+  ],
+  'potted plant': [
+    'Why do people keep plants indoors?',
+    'How do you take care of this object?',
+    'What are the benefits of having plants in a room?',
+    'Describe the color and shape of this plant.'
+  ],
+  'clock': [
+    'Why is knowing the time important?',
+    'Describe how this object works.',
+    'How would your day be different without this object?'
+  ],
+  'vase': [
+    'What do people usually put in this object?',
+    'Describe the shape and color of this object.',
+    'Where do you usually see this object?'
+  ],
+  'scissors': [
+    'What do you use this object for?',
+    'Describe how this object works.',
+    'When do you most often need this object?'
+  ],
+  'pen': [
+    'What do you use this object for?',
+    'When was the last time you wrote by hand?',
+    'How is writing by hand different from typing?'
+  ],
+  'backpack': [
+    'What do you carry in this object?',
+    'When do you usually use this object?',
+    'Why is this object useful for students?'
+  ],
+  'umbrella': [
+    'When do you use this object?',
+    'How does this object protect you?',
+    'Describe a time when this object saved you from getting wet.'
+  ],
+  'handbag': [
+    'What do you carry in this object?',
+    'When do you usually bring this object?',
+    'Describe this object\'s size and color.'
+  ],
+  'tie': [
+    'When do people usually wear this object?',
+    'How do you put this object on?',
+    'What does wearing this object tell others about you?'
+  ],
+  'suitcase': [
+    'When do you use this object?',
+    'What do you pack inside this object?',
+    'Describe your most memorable trip using this object.'
+  ],
+  'bicycle': [
+    'When do you usually ride this object?',
+    'What are the benefits of cycling?',
+    'How do you stay safe when using this object?'
+  ],
+  'car': [
+    'Where do you usually travel by car?',
+    'What makes a car useful in daily life?',
+    'How would your life be different without a car?'
+  ],
+  'traffic light': [
+    'Why are traffic lights important?',
+    'Describe how traffic lights work.',
+    'What would roads be like without traffic lights?'
+  ],
+  'fire hydrant': [
+    'Why is this object important in a city?',
+    'How does this object help people?',
+    'When would you need to use this object?'
+  ],
+  'bench': [
+    'Where do you usually see this object?',
+    'How do people use this object?',
+    'Describe a time you sat on this kind of object.'
+  ],
+  'dining table': [
+    'What do people do at this object?',
+    'Describe a typical meal at a dining table.',
+    'Why is sharing a meal at a table important?'
+  ],
+  'wine glass': [
+    'What do people put in this object?',
+    'Describe the shape of this object.',
+    'When is this object typically used?'
+  ],
+  'fork': [
+    'How do you use this object?',
+    'What foods do you eat with this object?',
+    'Compare this object to another eating utensil.'
+  ],
+  'knife': [
+    'What do you use this object for in the kitchen?',
+    'How do you stay safe when using this object?',
+    'Describe how you would cut something with this object.'
+  ],
+  'spoon': [
+    'What foods do you eat with this object?',
+    'How do you use this object?',
+    'Compare this object to a fork.'
+  ],
+  'bowl': [
+    'What do you put in this object?',
+    'Describe the shape of this object.',
+    'When do you usually use this object?'
+  ],
+  'banana': [
+    'Describe the taste of this food.',
+    'What nutrients does this food provide?',
+    'How do you usually eat this fruit?'
+  ],
+  'apple': [
+    'Describe the taste and texture of this fruit.',
+    'Why are fruits important for your health?',
+    'When do you usually eat this fruit?'
+  ],
+  'orange': [
+    'Describe the taste of this fruit.',
+    'How do you peel this fruit?',
+    'What vitamins does this fruit contain?'
+  ],
+  'pizza': [
+    'Describe your favorite pizza topping.',
+    'When do you usually eat pizza?',
+    'How is pizza made from scratch?'
+  ],
+  'hot dog': [
+    'When do you usually eat this food?',
+    'Describe the taste of this food.',
+    'What toppings do you add to this food?'
+  ],
+  'sandwich': [
+    'What ingredients would you put in this sandwich?',
+    'Describe a sandwich you enjoy eating.',
+    'When do you usually eat a sandwich?'
+  ],
+  'cake': [
+    'What occasions do you celebrate with this food?',
+    'Describe your favorite flavor of this food.',
+    'How is this food made?'
+  ],
+  'donut': [
+    'Describe your favorite flavor of this food.',
+    'When do you usually eat this food?',
+    'What makes this food a popular snack?'
+  ],
+  'dog': [
+    'What do dogs need to stay healthy?',
+    'How do dogs communicate with people?',
+    'Describe a dog you have seen or owned.'
+  ],
+  'cat': [
+    'Describe the behavior of this animal.',
+    'Why do people keep cats as pets?',
+    'How do cats communicate with their owners?'
+  ],
+  'bird': [
+    'Describe the features of this animal.',
+    'Why are birds important for the environment?',
+    'Have you ever watched birds in nature? What did you see?'
+  ],
+  'horse': [
+    'What are horses used for by people?',
+    'Describe the size and features of this animal.',
+    'How do you care for a horse?'
+  ],
+  'cow': [
+    'What products do we get from this animal?',
+    'Describe where this animal usually lives.',
+    'Why is this animal important in farming?'
+  ],
+  'sheep': [
+    'What products do we get from this animal?',
+    'Describe the appearance of this animal.',
+    'Where do sheep usually live?'
+  ],
+  'elephant': [
+    'Describe the special features of this animal.',
+    'Why are elephants considered intelligent?',
+    'What challenges do elephants face in the wild?'
+  ],
+  'bear': [
+    'Describe the habitat of this animal.',
+    'How does this animal survive in winter?',
+    'What do bears eat in the wild?'
+  ],
+  'zebra': [
+    'Describe the unique appearance of this animal.',
+    'Where do zebras live in the wild?',
+    'Why do you think zebras have stripes?'
+  ],
+  'giraffe': [
+    'Describe the unique features of this animal.',
+    'How does this animal\'s body help it survive?',
+    'Where do giraffes live in the wild?'
   ]
 };
 
-/* ─────────────────────────────────────────────────────
-   DOM References
-   ───────────────────────────────────────────────────── */
-const video         = document.getElementById("video");
-const overlay       = document.getElementById("overlay");
-const startBtn      = document.getElementById("start-btn");
-const stopBtn       = document.getElementById("stop-btn");
-const camError      = document.getElementById("cam-error");
-const statusDot     = document.getElementById("status-dot");
-const statusText    = document.getElementById("status-text");
-const scanLine      = document.getElementById("scan-line");
-const modelOverlay  = document.getElementById("model-overlay");
-const camInfoText   = document.getElementById("cam-info-text");
-const placeholder   = document.getElementById("camera-placeholder");
-const urlWarning    = document.getElementById("url-warning");
-const detPanel      = document.getElementById("detection-panel");
-const objBadge      = document.getElementById("obj-badge");
-const confText      = document.getElementById("conf-text");
-const questionText  = document.getElementById("question-text");
-const nameInput     = document.getElementById("name-input");
-const answerInput   = document.getElementById("answer-input");
-const submitBtn     = document.getElementById("submit-btn");
-const toast         = document.getElementById("toast");
-const ctx           = overlay.getContext("2d");
+// ===== ค่าตั้งต้น และตัวแปร state =====
 
-/* ─────────────────────────────────────────────────────
-   State
-   ───────────────────────────────────────────────────── */
-let model           = null;   // COCO-SSD model
-let stream          = null;   // MediaStream
-let animId          = null;   // requestAnimationFrame ID
-let currentObject   = null;   // วัตถุที่ตรวจพบล่าสุด (ที่อยู่ใน question bank)
-let currentQuestion = null;   // คำถามปัจจุบัน
-let isDetecting     = false;
-let detectionCooldown = false; // ป้องกันการ reset panel บ่อยเกินไป
+const CONFIDENCE_THRESHOLD = 0.65;   // confidence ขั้นต่ำ 65%
+const DETECTION_INTERVAL   = 1100;   // ตรวจจับทุก ~1100ms
+const LOCK_REQUIRED_COUNT  = 3;      // ต้องเจอวัตถุเดิมกี่ครั้งก่อนล็อก
+const LOCK_DURATION        = 6000;   // ล็อกคำถามนานกี่ ms
 
-/* ─────────────────────────────────────────────────────
-   Utility: สุ่มคำถามจาก array
-   ───────────────────────────────────────────────────── */
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+// ขนาดโซนกลางจอ (เปอร์เซ็นต์ของ canvas)
+const CENTER_ZONE_RATIO    = 0.45;   // 45% ของความกว้าง/สูง
 
-/* ─────────────────────────────────────────────────────
-   Utility: แสดง Toast notification
-   ───────────────────────────────────────────────────── */
-function showToast(msg, type = "info") {
-  toast.textContent = msg;
-  toast.className = `show ${type}`;
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => { toast.className = ""; }, 3200);
-}
+let model         = null;   // TensorFlow COCO-SSD model
+let stream        = null;   // MediaStream กล้อง
+let detectionLoop = null;   // setInterval handle
+let isRunning     = false;  // กำลังตรวจจับอยู่หรือไม่
 
-/* ─────────────────────────────────────────────────────
-   ตรวจสอบ URL warning
-   ───────────────────────────────────────────────────── */
-function checkUrlWarning() {
-  if (GOOGLE_SCRIPT_URL.startsWith("PASTE_YOUR")) {
-    urlWarning.classList.remove("hidden");
-  } else {
-    urlWarning.classList.add("hidden");
-  }
-}
+// ---- State สำหรับ debounce และ lock ----
+let candidateObject = null;    // วัตถุที่กำลังพิจารณา
+let candidateCount  = 0;       // นับครั้งที่เจอวัตถุเดิมต่อเนื่อง
+let lockedObject    = null;    // วัตถุที่ล็อกแล้ว (แสดงคำถาม)
+let lockExpiry      = 0;       // เวลาหมดล็อก (Date.now())
+let lastQuestion    = '';      // คำถามล่าสุด (ป้องกันซ้ำ)
 
-/* ─────────────────────────────────────────────────────
-   โหลด COCO-SSD Model
-   ───────────────────────────────────────────────────── */
-async function loadModel() {
-  try {
-    modelOverlay.classList.remove("hidden");
-    camInfoText.textContent = "กำลังโหลด AI...";
-    model = await cocoSsd.load();
-    modelOverlay.classList.add("hidden");
-    startBtn.disabled = false;
-    camInfoText.textContent = "AI พร้อมใช้งาน ✓";
-    console.log("✅ COCO-SSD model loaded");
-  } catch (err) {
-    modelOverlay.classList.add("hidden");
-    camInfoText.textContent = "โหลด AI ไม่สำเร็จ";
-    showToast("❌ โหลด AI Model ไม่สำเร็จ กรุณา Refresh", "error");
-    console.error("Model load error:", err);
-  }
-}
+// ---- DOM references ----
+const videoEl       = document.getElementById('videoEl');
+const canvas        = document.getElementById('overlayCanvas');
+const ctx           = canvas.getContext('2d');
+const statusBadge   = document.getElementById('statusBadge');
+const questionCard  = document.getElementById('questionCard');
+const questionText  = document.getElementById('questionText');
+const objectLabel   = document.getElementById('objectLabel');
+const lockIndicator = document.getElementById('lockIndicator');
+const dots          = [
+  document.getElementById('dot0'),
+  document.getElementById('dot1'),
+  document.getElementById('dot2')
+];
 
-/* ─────────────────────────────────────────────────────
-   เปิดกล้อง
-   ───────────────────────────────────────────────────── */
+// =====================================================
+// NAVIGATION: สลับหน้า
+// =====================================================
+
+/**
+ * เริ่มกล้อง — เรียกเมื่อกดปุ่ม "เริ่มเปิดกล้อง"
+ */
 async function startCamera() {
-  camError.style.display = "none";
-  try {
-    // ขอใช้กล้องหลัง (facingMode: environment) ก่อน
-    const constraints = {
-      video: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 960 }
-      }
-    };
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    await video.play();
+  // แสดงหน้ากล้อง ซ่อนหน้าเมนู
+  document.getElementById('menuPage').classList.add('hidden');
+  document.getElementById('cameraPage').classList.remove('hidden');
 
-    // แสดง video ซ่อน placeholder
-    video.style.display = "block";
-    placeholder.classList.add("hidden");
-    scanLine.classList.remove("hidden");
+  // แสดง overlay ขณะโหลด
+  showLoadingOverlay('กำลังโหลด AI...');
 
-    // UI state
-    startBtn.style.display = "none";
-    stopBtn.style.display = "inline-flex";
-    statusDot.className = "status-dot live";
-    statusText.textContent = "LIVE";
-    camInfoText.textContent = "กำลังตรวจจับวัตถุ...";
-
-    isDetecting = true;
-    detectLoop();
-
-  } catch (err) {
-    // แสดงข้อความแนะนำเมื่อเปิดกล้องไม่ได้
-    let msg = "ไม่สามารถเข้าถึงกล้องได้";
-    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-      msg = "🚫 ถูกปฏิเสธการใช้กล้อง — กรุณาอนุญาตการใช้กล้องในการตั้งค่าเบราว์เซอร์ แล้วลองใหม่";
-    } else if (err.name === "NotFoundError") {
-      msg = "📷 ไม่พบกล้องในอุปกรณ์นี้";
-    } else if (err.name === "NotSupportedError" || location.protocol !== "https:") {
-      msg = "🔒 กรุณาเปิดผ่าน HTTPS (GitHub Pages) เพื่อใช้งานกล้อง";
+  // โหลด model ถ้ายังไม่ได้โหลด
+  if (!model) {
+    updateStatus('⏳ โหลด AI', '');
+    setLoadingMsg('กำลังโหลด AI (ครั้งแรกอาจใช้เวลา)...');
+    try {
+      model = await cocoSsd.load();
+    } catch (err) {
+      alert('โหลด AI ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
+      goBack();
+      return;
     }
-    camError.textContent = msg;
-    camError.style.display = "block";
-    console.error("Camera error:", err);
   }
+
+  // ขอสิทธิ์กล้อง
+  updateStatus('📷 เปิดกล้อง', '');
+  setLoadingMsg('กำลังเปิดกล้อง...');
+  try {
+    // ลองกล้องหลัง (environment) ก่อน
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+  } catch (err) {
+    // ถ้าไม่ได้กล้องหลัง ลองกล้องใดก็ได้
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch (err2) {
+      alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้อง');
+      goBack();
+      return;
+    }
+  }
+
+  // ผูก stream กับ video element
+  videoEl.srcObject = stream;
+  videoEl.onloadedmetadata = () => {
+    videoEl.play();
+    // ปรับ canvas ให้ตรงกับ viewport
+    resizeCanvas();
+    // ซ่อน loading overlay
+    hideLoadingOverlay();
+    // เริ่ม detection loop
+    startDetection();
+  };
 }
 
-/* ─────────────────────────────────────────────────────
-   หยุดกล้อง
-   ───────────────────────────────────────────────────── */
-function stopCamera() {
-  isDetecting = false;
-  if (animId) cancelAnimationFrame(animId);
+/**
+ * กลับหน้าหลัก — ปิดกล้องและหยุด AI
+ */
+function goBack() {
+  // หยุด detection loop
+  stopDetection();
+
+  // ปิด camera stream
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
   }
-  video.srcObject = null;
-  video.style.display = "none";
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  videoEl.srcObject = null;
 
-  placeholder.classList.remove("hidden");
-  scanLine.classList.add("hidden");
-  startBtn.style.display = "inline-flex";
-  stopBtn.style.display = "none";
-  statusDot.className = "status-dot";
-  statusText.textContent = "ยังไม่เปิดกล้อง";
-  camInfoText.textContent = "AI พร้อมใช้งาน ✓";
+  // reset state
+  resetDetectionState();
 
-  // ซ่อน detection panel
-  hideDetectionPanel();
+  // ซ่อนหน้ากล้อง แสดงหน้าเมนู
+  document.getElementById('cameraPage').classList.add('hidden');
+  document.getElementById('menuPage').classList.remove('hidden');
+
+  // ซ่อน loading overlay (กรณีกด back ระหว่างโหลด)
+  document.getElementById('loadingOverlay').classList.remove('fade-out');
+  document.getElementById('loadingOverlay').style.display = 'none';
 }
 
-/* ─────────────────────────────────────────────────────
-   Detection Loop (requestAnimationFrame)
-   ───────────────────────────────────────────────────── */
-async function detectLoop() {
-  if (!isDetecting) return;
+// =====================================================
+// DETECTION LOOP: ตรวจจับวัตถุด้วย TensorFlow COCO-SSD
+// =====================================================
 
-  // ซิงค์ขนาด canvas กับ video
-  if (video.videoWidth > 0) {
-    overlay.width  = video.videoWidth;
-    overlay.height = video.videoHeight;
-  }
+/**
+ * เริ่ม detection loop ทุก DETECTION_INTERVAL ms
+ */
+function startDetection() {
+  if (isRunning) return;
+  isRunning = true;
+  updateStatus('🔍 สแกน', 'scanning');
 
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  detectionLoop = setInterval(async () => {
+    if (!model || !videoEl || videoEl.readyState < 2) return;
 
-  // ตรวจจับวัตถุ
-  let predictions = [];
-  try {
-    predictions = await model.detect(video);
-  } catch (e) {
-    // model อาจยังไม่พร้อม ข้ามรอบนี้
-  }
-
-  // กรองเฉพาะวัตถุที่อยู่ใน Question Bank
-  const supported = predictions.filter(p =>
-    QUESTION_BANK.hasOwnProperty(p.class) && p.score > 0.45
-  );
-
-  if (supported.length > 0) {
-    // ใช้วัตถุที่ confidence สูงที่สุด
-    const best = supported.reduce((a, b) => a.score > b.score ? a : b);
-    drawBox(best);
-
-    // อัปเดต status
-    statusDot.className = "status-dot detecting";
-    statusText.textContent = "DETECTING";
-
-    // แสดง panel ถ้าวัตถุเปลี่ยน
-    if (!detectionCooldown && best.class !== currentObject) {
-      currentObject   = best.class;
-      currentQuestion = pickRandom(QUESTION_BANK[best.class]);
-      showDetectionPanel(best);
+    let predictions;
+    try {
+      // ตรวจจับวัตถุจาก video frame
+      predictions = await model.detect(videoEl);
+    } catch (e) {
+      return;
     }
 
-  } else {
-    // ไม่พบวัตถุที่รองรับ
-    statusDot.className = "status-dot live";
-    statusText.textContent = "LIVE";
-  }
+    // กรองเฉพาะ confidence >= threshold
+    const validPreds = predictions.filter(p =>
+      p.score >= CONFIDENCE_THRESHOLD && QUESTION_BANK[p.class]
+    );
 
-  // วาดกรอบของวัตถุอื่น ๆ ที่พบแต่ไม่รองรับ (สีเทา, บาง)
-  predictions.forEach(p => {
-    if (!QUESTION_BANK.hasOwnProperty(p.class) && p.score > 0.45) {
-      drawBoxUnsupported(p);
+    // วาด bounding box ทุก valid predictions
+    drawBoxes(validPreds);
+
+    if (validPreds.length === 0) {
+      // ไม่พบวัตถุ — reset candidate (แต่รักษา lock ไว้ถ้ายังไม่หมด)
+      candidateObject = null;
+      candidateCount  = 0;
+      updateLockDots(0);
+
+      if (Date.now() >= lockExpiry) {
+        // หมด lock แล้ว ซ่อนคำถาม
+        lockedObject = null;
+        hideQuestion();
+        updateStatus('🔍 สแกน', 'scanning');
+      }
+      return;
+    }
+
+    // ---- เลือกวัตถุที่ใกล้กลางจอมากที่สุด (Center Priority) ----
+    const selected = selectCenterObject(validPreds);
+
+    // ---- ถ้ายัง lock อยู่ ห้ามเปลี่ยนคำถาม ----
+    if (lockedObject && Date.now() < lockExpiry) {
+      updateStatus('✅ พบแล้ว', 'found');
+      return;
+    }
+
+    // ---- Debounce: ต้องเจอวัตถุเดิมต่อเนื่องก่อน ----
+    if (selected.class === candidateObject) {
+      candidateCount++;
+    } else {
+      // วัตถุเปลี่ยน reset นับ
+      candidateObject = selected.class;
+      candidateCount  = 1;
+    }
+
+    updateLockDots(candidateCount);
+
+    // ถ้าเจอครบ threshold → ล็อกและแสดงคำถาม
+    if (candidateCount >= LOCK_REQUIRED_COUNT) {
+      lockObject(selected.class);
+    } else {
+      updateStatus(`🔍 ตรวจสอบ (${candidateCount}/${LOCK_REQUIRED_COUNT})`, 'scanning');
+    }
+  }, DETECTION_INTERVAL);
+}
+
+/**
+ * หยุด detection loop
+ */
+function stopDetection() {
+  if (detectionLoop) {
+    clearInterval(detectionLoop);
+    detectionLoop = null;
+  }
+  isRunning = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/**
+ * Reset state ทั้งหมด
+ */
+function resetDetectionState() {
+  candidateObject = null;
+  candidateCount  = 0;
+  lockedObject    = null;
+  lockExpiry      = 0;
+  lastQuestion    = '';
+  hideQuestion();
+  updateLockDots(0);
+}
+
+// =====================================================
+// CENTER PRIORITY DETECTION
+// =====================================================
+
+/**
+ * เลือกวัตถุที่อยู่ใกล้กลางจอที่สุด
+ * โดยคำนวณ distance จาก center ของ bounding box ไปยัง center ของ canvas
+ *
+ * @param {Array} predictions - valid predictions
+ * @returns {Object} prediction ที่เลือก
+ */
+function selectCenterObject(predictions) {
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const cx = cw / 2;
+  const cy = ch / 2;
+
+  let best     = null;
+  let bestScore = -Infinity;
+
+  predictions.forEach(pred => {
+    const [x, y, w, h] = pred.bbox;
+
+    // จุดกึ่งกลางของ bounding box
+    const bx = x + w / 2;
+    const by = y + h / 2;
+
+    // ระยะห่างจากจุดกลางจอ (normalize ด้วยขนาดจอ)
+    const dx = (bx - cx) / cw;
+    const dy = (by - cy) / ch;
+    const dist = Math.sqrt(dx * dx + dy * dy); // 0 = กลางจอ, ~0.7 = มุมจอ
+
+    // คะแนน = confidence ลบด้วย penalty ระยะห่าง
+    // ยิ่งอยู่กลาง dist น้อย คะแนนยิ่งสูง
+    const score = pred.score - dist * 0.8;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = pred;
     }
   });
 
-  animId = requestAnimationFrame(detectLoop);
+  return best;
 }
 
-/* ─────────────────────────────────────────────────────
-   วาดกรอบวัตถุที่รองรับ (สี accent)
-   ───────────────────────────────────────────────────── */
-function drawBox(pred) {
-  const [x, y, w, h] = pred.bbox;
-  const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
+/**
+ * ตรวจว่า bounding box อยู่ในโซนกลางจอหรือไม่
+ * ใช้กรองเพิ่มเติม (optional)
+ *
+ * @param {Array} bbox [x, y, w, h]
+ * @returns {boolean}
+ */
+function isInCenterZone(bbox) {
+  const [x, y, w, h] = bbox;
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const zw = cw * CENTER_ZONE_RATIO;
+  const zh = ch * CENTER_ZONE_RATIO;
+  const zx = (cw - zw) / 2;
+  const zy = (ch - zh) / 2;
 
-  // กรอบ
-  ctx.strokeStyle = "#00e5ff";
-  ctx.lineWidth   = 2.5;
-  ctx.shadowColor = "#00e5ff";
-  ctx.shadowBlur  = 10;
-  ctx.strokeRect(x, y, w, h);
-  ctx.shadowBlur  = 0;
+  const bx = x + w / 2;
+  const by = y + h / 2;
 
-  // Label background
-  ctx.fillStyle = "rgba(0,229,255,.85)";
-  const textW = ctx.measureText(label).width + 16;
-  ctx.fillRect(x, y - 26, textW, 26);
-
-  // Label text
-  ctx.fillStyle = "#0a0e17";
-  ctx.font = "bold 13px 'DM Sans', sans-serif";
-  ctx.fillText(label, x + 8, y - 8);
+  return (bx >= zx && bx <= zx + zw && by >= zy && by <= zy + zh);
 }
 
-/* ─────────────────────────────────────────────────────
-   วาดกรอบวัตถุที่ไม่รองรับ (สีเทา, จาง)
-   ───────────────────────────────────────────────────── */
-function drawBoxUnsupported(pred) {
-  const [x, y, w, h] = pred.bbox;
-  ctx.strokeStyle = "rgba(255,255,255,.2)";
-  ctx.lineWidth   = 1;
-  ctx.strokeRect(x, y, w, h);
+// =====================================================
+// LOCK & QUESTION DISPLAY
+// =====================================================
+
+/**
+ * ล็อกวัตถุและแสดงคำถาม
+ * @param {string} objClass - ชื่อวัตถุ
+ */
+function lockObject(objClass) {
+  lockedObject    = objClass;
+  lockExpiry      = Date.now() + LOCK_DURATION;
+  candidateObject = null;
+  candidateCount  = 0;
+  updateLockDots(0);
+
+  showQuestion(objClass);
+  updateStatus('✅ พบแล้ว', 'found');
 }
 
-/* ─────────────────────────────────────────────────────
-   แสดง Detection Panel
-   ───────────────────────────────────────────────────── */
-function showDetectionPanel(pred) {
-  objBadge.textContent    = pred.class;
-  confText.textContent    = `Confidence: ${(pred.score * 100).toFixed(0)}%`;
-  questionText.textContent = currentQuestion;
+/**
+ * สุ่มคำถามจาก Question Bank และแสดง
+ * @param {string} objClass
+ */
+function showQuestion(objClass) {
+  const questions = QUESTION_BANK[objClass];
+  if (!questions) return;
 
-  // clear ช่องกรอกคำตอบ (แต่ไม่ clear ชื่อ เพื่อความสะดวก)
-  answerInput.value = "";
+  // สุ่มคำถามใหม่ที่ไม่ซ้ำกับล่าสุด
+  let q;
+  let attempts = 0;
+  do {
+    q = questions[Math.floor(Math.random() * questions.length)];
+    attempts++;
+  } while (q === lastQuestion && questions.length > 1 && attempts < 10);
 
-  detPanel.classList.add("show");
+  lastQuestion = q;
 
-  // scroll ลงไปที่ panel
-  detPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // อัปเดต UI
+  objectLabel.textContent = objClass;
+  questionText.textContent = q;
 
-  // cooldown 3 วินาที ป้องกัน panel กระพริบ
-  detectionCooldown = true;
-  setTimeout(() => { detectionCooldown = false; }, 3000);
+  // แสดง card ด้วย animation
+  questionCard.classList.remove('hidden');
 }
 
-/* ─────────────────────────────────────────────────────
-   ซ่อน Detection Panel
-   ───────────────────────────────────────────────────── */
-function hideDetectionPanel() {
-  detPanel.classList.remove("show");
-  currentObject   = null;
-  currentQuestion = null;
-  objBadge.textContent = "—";
-  questionText.textContent = "—";
-  answerInput.value = "";
+/**
+ * ซ่อน question card
+ */
+function hideQuestion() {
+  questionCard.classList.add('hidden');
 }
 
-/* ─────────────────────────────────────────────────────
-   ส่งข้อมูลไป Google Apps Script
-   ───────────────────────────────────────────────────── */
-async function submitAnswer() {
-  const name   = nameInput.value.trim();
-  const answer = answerInput.value.trim();
+// =====================================================
+// STATUS & UI HELPERS
+// =====================================================
 
-  // Validation
-  if (!name) {
-    showToast("⚠️ กรุณากรอกชื่อผู้ตอบ", "error");
-    nameInput.focus();
-    return;
-  }
-  if (!answer) {
-    showToast("⚠️ กรุณากรอกคำตอบ", "error");
-    answerInput.focus();
-    return;
-  }
-  if (!currentObject) {
-    showToast("⚠️ ยังไม่พบวัตถุที่รองรับ", "error");
-    return;
-  }
-  if (GOOGLE_SCRIPT_URL.startsWith("PASTE_YOUR")) {
-    showToast("⚠️ ยังไม่ได้ตั้งค่า Google Script URL", "error");
-    return;
-  }
+/**
+ * อัปเดต badge สถานะ
+ * @param {string} text  - ข้อความ
+ * @param {string} cls   - 'ready' | 'scanning' | 'found' | ''
+ */
+function updateStatus(text, cls) {
+  statusBadge.textContent = text;
+  statusBadge.className = '';   // reset
+  if (cls) statusBadge.classList.add(cls);
+}
 
-  // Loading state
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = `<div class="spinner"></div> กำลังส่ง...`;
-
-  // เตรียมข้อมูลที่จะส่ง
-  const payload = new URLSearchParams({
-    name:           name,
-    detectedObject: currentObject,
-    question:       currentQuestion,
-    answer:         answer,
-    userAgent:      navigator.userAgent
-  });
-
-  try {
-    // ส่งข้อมูลแบบ POST ไปยัง Google Apps Script
-    const res = await fetch(GOOGLE_SCRIPT_URL, {
-      method:  "POST",
-      mode:    "no-cors", // จำเป็นสำหรับ Apps Script
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    payload.toString()
+/**
+ * อัปเดตจุด lock indicator
+ * @param {number} count - 0-3
+ */
+function updateLockDots(count) {
+  // แสดง indicator เฉพาะเมื่อกำลังนับ
+  if (count > 0 && count < LOCK_REQUIRED_COUNT) {
+    lockIndicator.classList.add('visible');
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i < count);
     });
-
-    // no-cors จะไม่ได้ response body — ถือว่าสำเร็จ
-    showToast("✅ ส่งคำตอบสำเร็จ!", "success");
-    answerInput.value   = "";
-    detectionCooldown   = false; // รีเซ็ต cooldown
-    currentObject       = null;  // รอตรวจจับวัตถุใหม่
-    detPanel.classList.remove("show");
-
-  } catch (err) {
-    showToast("❌ ส่งไม่สำเร็จ กรุณาลองใหม่", "error");
-    console.error("Submit error:", err);
-
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = "✅ ส่งคำตอบ";
+  } else {
+    lockIndicator.classList.remove('visible');
+    dots.forEach(d => d.classList.remove('active'));
   }
 }
 
-/* ─────────────────────────────────────────────────────
-   Event Listeners
-   ───────────────────────────────────────────────────── */
-startBtn.addEventListener("click", startCamera);
-stopBtn.addEventListener("click", stopCamera);
-submitBtn.addEventListener("click", submitAnswer);
+// =====================================================
+// CANVAS & BOUNDING BOX DRAWING
+// =====================================================
 
-/* ─────────────────────────────────────────────────────
-   Init
-   ───────────────────────────────────────────────────── */
-checkUrlWarning();
-loadModel(); // โหลด AI Model ทันทีที่เปิดหน้าเว็บ
+/**
+ * ปรับขนาด canvas ให้ตรงกับ viewport
+ */
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+/**
+ * วาด bounding box สำหรับทุก predictions
+ * @param {Array} predictions
+ */
+function drawBoxes(predictions) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!predictions || predictions.length === 0) return;
+
+  const vw = videoEl.videoWidth   || 1;
+  const vh = videoEl.videoHeight  || 1;
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  // คำนวณ scale และ offset สำหรับ object-fit: cover
+  // (วิดีโออาจถูก crop เพื่อเต็มจอ)
+  const scaleX = cw / vw;
+  const scaleY = ch / vh;
+  const scale  = Math.max(scaleX, scaleY);   // cover = ใช้ scale ที่ใหญ่กว่า
+
+  const offsetX = (cw - vw * scale) / 2;
+  const offsetY = (ch - vh * scale) / 2;
+
+  // เลือกวัตถุกลางจอสำหรับ highlight
+  const selected = selectCenterObject(predictions);
+
+  predictions.forEach(pred => {
+    const [x, y, w, h] = pred.bbox;
+    const isSelected = (pred === selected);
+
+    // แปลง coordinate จาก video space → canvas space
+    const rx = x * scale + offsetX;
+    const ry = y * scale + offsetY;
+    const rw = w * scale;
+    const rh = h * scale;
+
+    // เลือกสี: วัตถุที่เลือก = เขียวสว่าง, อื่นๆ = โปร่งแสง
+    const color = isSelected ? '#00ffe0' : 'rgba(255,255,255,0.35)';
+    const lw    = isSelected ? 2.5 : 1.5;
+
+    // วาดกรอบ
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = lw;
+    ctx.shadowColor = isSelected ? 'rgba(0,255,224,0.6)' : 'transparent';
+    ctx.shadowBlur  = isSelected ? 8 : 0;
+    ctx.strokeRect(rx, ry, rw, rh);
+
+    // วาด label บน bounding box
+    const label = `${pred.class} ${(pred.score * 100).toFixed(0)}%`;
+    ctx.font         = `bold ${isSelected ? 14 : 12}px Prompt, sans-serif`;
+    ctx.fillStyle    = color;
+    ctx.shadowColor  = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur   = 4;
+
+    const textY = ry > 24 ? ry - 8 : ry + rh + 18;
+    ctx.fillText(label, rx + 4, textY);
+
+    // reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+  });
+}
+
+// =====================================================
+// LOADING OVERLAY HELPERS
+// =====================================================
+
+function showLoadingOverlay(msg) {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = '';
+  overlay.classList.remove('fade-out');
+  setLoadingMsg(msg);
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('fade-out');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 600);
+}
+
+function setLoadingMsg(msg) {
+  document.getElementById('loadingMsg').textContent = msg;
+}
+
+// =====================================================
+// INIT: โหลดหน้าเว็บ
+// =====================================================
+
+window.addEventListener('load', () => {
+  // ซ่อน loading overlay หลังจาก DOM พร้อม
+  setTimeout(() => {
+    hideLoadingOverlay();
+    // ซ่อน loading overlay ไว้ ให้แสดงเฉพาะตอนเปิดกล้อง
+  }, 800);
+});
+
+// ป้องกัน scroll และ zoom บนมือถือ
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 </script>
+
 </body>
 </html>
