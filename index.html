@@ -826,210 +826,50 @@
       }
     }
 
+
     /* ===================================================
-       READABLE AR QUESTION TEXT OVERRIDE
-       ปรับเฉพาะข้อความคำถามบนหน้ากล้องให้อ่านง่ายขึ้น
-       - ยังไม่มีพื้นหลัง popup
-       - ยังไม่มีกรอบสแกน
-       - เน้นตัวอักษรใหญ่ สีชัด มีขอบดำและเงาแบบ 3D
+       FINAL QUESTION TEXT TUNING
+       - คำถามวัตถุที่รู้จักถูกปรับให้สั้นและชวนคิด
+       - จำกัดการแสดงผลให้ไม่เกิน 2 บรรทัด
     =================================================== */
-
-    #questionPopup {
-      width: min(92vw, 620px) !important;
-      padding: 0 8px !important;
-      text-align: center !important;
-      filter:
-        drop-shadow(0 18px 18px rgba(0,0,0,0.72))
-        drop-shadow(0 0 18px rgba(0,255,224,0.20)) !important;
-    }
-
-    .popup-object-tag {
-      margin-bottom: 10px !important;
-      font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-      font-size: clamp(15px, 3.8vw, 23px) !important;
-      font-weight: 800 !important;
-      letter-spacing: 1.2px !important;
-      color: #27ffe6 !important;
-      -webkit-text-stroke: 0.7px rgba(0,0,0,0.85) !important;
-      paint-order: stroke fill !important;
-      text-shadow:
-        0 2px 0 #007a70,
-        0 5px 8px rgba(0,0,0,0.90),
-        0 0 10px rgba(0,255,224,0.85),
-        0 0 24px rgba(0,255,224,0.45) !important;
-    }
 
     #popupQuestionText {
       font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
-      font-size: clamp(30px, 8.2vw, 58px) !important;
-      font-weight: 900 !important;
-      line-height: 1.12 !important;
-      letter-spacing: -0.25px !important;
-      color: #fff7d6 !important;
-      max-width: 100% !important;
-      overflow-wrap: break-word !important;
-      word-break: normal !important;
-      text-wrap: balance;
-      -webkit-text-stroke: 1.35px rgba(0,0,0,0.90) !important;
-      paint-order: stroke fill !important;
-      text-shadow:
-        0 1px 0 #ffffff,
-        0 3px 0 #ffd447,
-        0 6px 0 #d88900,
-        0 10px 8px rgba(0,0,0,0.98),
-        0 16px 24px rgba(0,0,0,0.85),
-        0 0 4px rgba(0,0,0,1),
-        0 0 18px rgba(0,255,224,0.65),
-        0 0 36px rgba(255,212,71,0.40) !important;
-      transform: translateZ(44px) !important;
-    }
-
-    /* ถ้าคำถามยาว ให้ลดขนาดอัตโนมัติ เพื่อไม่ล้นจอ */
-    #questionPopup.long-question #popupQuestionText {
-      font-size: clamp(25px, 6.5vw, 46px) !important;
-      line-height: 1.16 !important;
-      -webkit-text-stroke-width: 1.15px !important;
-    }
-
-    #questionPopup.very-long-question #popupQuestionText {
-      font-size: clamp(21px, 5.4vw, 36px) !important;
-      line-height: 1.18 !important;
-      -webkit-text-stroke-width: 1px !important;
-      letter-spacing: 0 !important;
-    }
-
-    @media (min-width: 700px) {
-      #questionPopup {
-        width: min(84vw, 720px) !important;
-      }
-
-      #popupQuestionText {
-        font-size: clamp(42px, 6.2vw, 72px) !important;
-      }
-
-      #questionPopup.long-question #popupQuestionText {
-        font-size: clamp(34px, 5vw, 56px) !important;
-      }
-
-      #questionPopup.very-long-question #popupQuestionText {
-        font-size: clamp(28px, 4vw, 44px) !important;
-      }
-    }
-
-    @media (max-width: 390px) {
-      #popupQuestionText {
-        font-size: clamp(27px, 8vw, 42px) !important;
-      }
-
-      #questionPopup.long-question #popupQuestionText {
-        font-size: clamp(23px, 6.2vw, 34px) !important;
-      }
-
-      #questionPopup.very-long-question #popupQuestionText {
-        font-size: clamp(20px, 5.2vw, 30px) !important;
-      }
-    }
-
-
-    /* ===================================================
-       FINAL QUESTION FONT OVERRIDE
-       ใช้ฟอนต์เดียวกับหน้าหลัก และจำกัดคำถามไม่เกิน 2 บรรทัด
-    =================================================== */
-
-    #questionPopup {
-      width: min(88vw, 560px) !important;
-      padding: 0 10px !important;
-      text-align: center !important;
-      filter:
-        drop-shadow(0 14px 16px rgba(0,0,0,0.68))
-        drop-shadow(0 0 12px rgba(0,255,224,0.18)) !important;
-    }
-
-    .popup-object-tag {
-      font-family: var(--font-en), var(--font-th), sans-serif !important;
-      font-size: clamp(11px, 2.8vw, 15px) !important;
-      font-weight: 800 !important;
-      letter-spacing: 1.6px !important;
-      margin-bottom: 6px !important;
-      color: #00ffe0 !important;
-      -webkit-text-stroke: 0.45px rgba(0,0,0,0.75) !important;
-      paint-order: stroke fill !important;
-      text-shadow:
-        0 2px 5px rgba(0,0,0,0.95),
-        0 0 12px rgba(0,255,224,0.70) !important;
-    }
-
-    #popupQuestionText {
-      font-family: var(--font-en), var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-      font-size: clamp(20px, 5.6vw, 36px) !important;
-      font-weight: 800 !important;
-      line-height: 1.08 !important;
-      letter-spacing: -0.35px !important;
-      color: #ffffff !important;
-      max-width: 100% !important;
+      font-size: clamp(22px, 5.4vw, 38px) !important;
+      line-height: 1.15 !important;
+      max-height: 2.3em !important;
       display: -webkit-box !important;
       -webkit-line-clamp: 2 !important;
+      line-clamp: 2 !important;
       -webkit-box-orient: vertical !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      overflow-wrap: anywhere !important;
-      word-break: normal !important;
-      -webkit-text-stroke: 0.95px rgba(0,0,0,0.88) !important;
-      paint-order: stroke fill !important;
-      text-shadow:
-        0 1px 0 rgba(255,255,255,0.80),
-        0 3px 0 rgba(0,199,177,0.55),
-        0 7px 8px rgba(0,0,0,0.92),
-        0 13px 18px rgba(0,0,0,0.78),
-        0 0 18px rgba(0,255,224,0.44) !important;
-      transform: translateZ(34px) !important;
     }
 
     #questionPopup.long-question #popupQuestionText {
-      font-size: clamp(18px, 4.9vw, 30px) !important;
-      line-height: 1.09 !important;
-      letter-spacing: -0.2px !important;
-      -webkit-text-stroke-width: 0.85px !important;
+      font-size: clamp(20px, 4.9vw, 34px) !important;
+      line-height: 1.16 !important;
     }
 
     #questionPopup.very-long-question #popupQuestionText {
-      font-size: clamp(16px, 4.25vw, 24px) !important;
-      line-height: 1.10 !important;
-      letter-spacing: 0 !important;
-      -webkit-text-stroke-width: 0.75px !important;
+      font-size: clamp(18px, 4.4vw, 30px) !important;
+      line-height: 1.16 !important;
     }
 
     @media (min-width: 700px) {
-      #questionPopup {
-        width: min(82vw, 640px) !important;
-      }
-
       #popupQuestionText {
-        font-size: clamp(24px, 4.3vw, 42px) !important;
+        font-size: clamp(30px, 4.7vw, 46px) !important;
       }
 
       #questionPopup.long-question #popupQuestionText {
-        font-size: clamp(21px, 3.7vw, 34px) !important;
+        font-size: clamp(27px, 4.1vw, 40px) !important;
       }
 
       #questionPopup.very-long-question #popupQuestionText {
-        font-size: clamp(18px, 3.1vw, 28px) !important;
+        font-size: clamp(24px, 3.6vw, 34px) !important;
       }
     }
 
-    @media (max-width: 390px) {
-      #popupQuestionText {
-        font-size: clamp(18px, 5.3vw, 30px) !important;
-      }
-
-      #questionPopup.long-question #popupQuestionText {
-        font-size: clamp(16px, 4.6vw, 25px) !important;
-      }
-
-      #questionPopup.very-long-question #popupQuestionText {
-        font-size: clamp(15px, 4.0vw, 21px) !important;
-      }
-    }
   </style>
 </head>
 <body>
@@ -1209,803 +1049,340 @@ const SUPPORTED_OBJECTS = new Set([
 ]);
 
 // =====================================================
-// DEFAULT_QUESTIONS: คำถามปลายเปิดทั่วไป
-// ใช้เมื่อวัตถุอยู่ใน SUPPORTED_OBJECTS แต่ไม่มีใน QUESTION_BANK
+// QUESTION SYSTEM: คำถามวัตถุที่รู้จัก + mystery object
+// เป้าหมาย: คำถามสั้น ไม่เกิน 2 บรรทัด และชวนคิดมากขึ้น
 // =====================================================
-const DEFAULT_QUESTIONS = [
-  'What is this object used for?',
-  'Where do you usually see this object?',
-  'Who uses this object the most?',
-  'How does this object make your life easier?',
-  'Describe this object in your own words.',
-  'What would happen if this object did not exist?',
-  'Can you think of another use for this object?',
-  'How is this object made or created?',
-  'What material is this object made of?',
-  'Is this object important in daily life? Why?',
-  'How has this object changed over time?',
-  'What do you like or dislike about this object?',
-  'When was the last time you used something like this?',
-  'How would a child describe this object?',
-  'If you had to explain this object to someone who had never seen it, what would you say?'
+
+const UNKNOWN_OBJECT_CLASS = '__mystery_object__';
+
+// คำถามสำหรับกรณี AI ยังไม่รู้จักวัตถุ / จับไม่ชัด
+const MYSTERY_OBJECT_QUESTIONS = [
+  'What could this object become?',
+  'What story could this object tell?',
+  'What would you name this object?',
+  'How might someone use this?',
+  'What problem could this solve?',
+  'What does this remind you of?',
+  'If this were magical, what could it do?',
+  'Who might need this object most?',
+  'What would happen if this disappeared?',
+  'How would you describe this to a child?'
 ];
 
-// =====================================================
-// QUESTION BANK: วัตถุที่มีคำถามเฉพาะ
-// วัตถุที่ไม่อยู่ใน QUESTION_BANK จะใช้ DEFAULT_QUESTIONS แทน
-// =====================================================
+// คำถามกลางสำหรับวัตถุที่รู้จักทั้งหมด
+const KNOWN_OBJECT_THINKING_QUESTIONS = [
+  'What story could this object tell?',
+  'How could this change your day?',
+  'What problem does this solve?',
+  'What would happen without this?',
+  'How could you improve this?',
+  'Who needs this the most?',
+  'What memory does this remind you of?',
+  'How could this help someone?',
+  'What would a future version do?',
+  'How would you explain this to a child?',
+  'What makes this useful?',
+  'What could this teach us?'
+];
+
+// แบ่งหมวดวัตถุ เพื่อสุ่มคำถามให้เข้ากับประเภทวัตถุมากขึ้น
+const OBJECT_CATEGORY = {
+  person: 'person',
+
+  bicycle: 'vehicle', car: 'vehicle', motorcycle: 'vehicle', airplane: 'vehicle', bus: 'vehicle',
+  train: 'vehicle', truck: 'vehicle', boat: 'vehicle',
+
+  bird: 'animal', cat: 'animal', dog: 'animal', horse: 'animal', sheep: 'animal', cow: 'animal',
+  elephant: 'animal', bear: 'animal', zebra: 'animal', giraffe: 'animal',
+
+  banana: 'food', apple: 'food', sandwich: 'food', orange: 'food', broccoli: 'food',
+  carrot: 'food', 'hot dog': 'food', pizza: 'food', donut: 'food', cake: 'food',
+
+  laptop: 'technology', mouse: 'technology', remote: 'technology', keyboard: 'technology',
+  'cell phone': 'technology', tv: 'technology',
+
+  chair: 'home', couch: 'home', 'potted plant': 'home', bed: 'home', 'dining table': 'home',
+  toilet: 'home', microwave: 'home', oven: 'home', toaster: 'home', sink: 'home', refrigerator: 'home',
+
+  book: 'learning', clock: 'learning', scissors: 'learning', toothbrush: 'daily',
+  backpack: 'daily', umbrella: 'daily', handbag: 'daily', tie: 'daily', suitcase: 'daily',
+  bottle: 'daily', cup: 'daily', fork: 'daily', knife: 'daily', spoon: 'daily', bowl: 'daily',
+  'wine glass': 'daily', vase: 'creative', 'teddy bear': 'creative', 'hair drier': 'daily',
+
+  'traffic light': 'public', 'fire hydrant': 'public', 'stop sign': 'public',
+  'parking meter': 'public', bench: 'public',
+
+  frisbee: 'sport', skis: 'sport', snowboard: 'sport', 'sports ball': 'sport', kite: 'sport',
+  'baseball bat': 'sport', 'baseball glove': 'sport', skateboard: 'sport', surfboard: 'sport',
+  'tennis racket': 'sport'
+};
+
+const CATEGORY_QUESTIONS = {
+  person: [
+    'What might this person be thinking?',
+    'What could happen next?',
+    'What question would you ask them?',
+    'What kind action could you do for them?',
+    'What story could start here?'
+  ],
+  vehicle: [
+    'Where would you go with this?',
+    'How does this connect people?',
+    'What journey could begin here?',
+    'How could this be greener?',
+    'What would travel be like without this?'
+  ],
+  animal: [
+    'What might this animal be feeling?',
+    'How would you protect this animal?',
+    'What can humans learn from it?',
+    'What would its day be like?',
+    'What makes this animal special?'
+  ],
+  food: [
+    'Who would you share this with?',
+    'What memory does this taste like?',
+    'How could you make it healthier?',
+    'What culture might this belong to?',
+    'How would you describe the taste?'
+  ],
+  technology: [
+    'How could this help you learn?',
+    'What would the future version do?',
+    'How does this change communication?',
+    'What problem could this solve?',
+    'How could you use this creatively?'
+  ],
+  home: [
+    'How does this make a place feel?',
+    'What role does this play at home?',
+    'How could you redesign this?',
+    'What daily routine uses this?',
+    'What would home be like without this?'
+  ],
+  learning: [
+    'What could this help you learn?',
+    'What idea could start from this?',
+    'How could this make someone smarter?',
+    'What question does this make you ask?',
+    'What skill connects to this?'
+  ],
+  daily: [
+    'How does this support daily life?',
+    'When is this most useful?',
+    'How could this be improved?',
+    'What habit connects to this?',
+    'What would you do without this?'
+  ],
+  public: [
+    'How does this help a community?',
+    'Why do public places need this?',
+    'What rule connects to this?',
+    'How does this keep people safe?',
+    'What would change if this vanished?'
+  ],
+  sport: [
+    'What skill does this require?',
+    'How could this bring people together?',
+    'What challenge could you try with this?',
+    'How does this make movement fun?',
+    'What goal could you set with this?'
+  ],
+  creative: [
+    'What feeling does this create?',
+    'How could this become art?',
+    'What story could this inspire?',
+    'What design would make this better?',
+    'How would you describe its style?'
+  ]
+};
+
+// คำถามเฉพาะสำหรับวัตถุที่พบบ่อย
 const QUESTION_BANK = {
   'cell phone': [
-    'How do you use this object?',
-    'When do you usually use this object?',
-    'Why is this object useful?',
-    'What would life be like without this device?',
-    'How has this object changed the way people communicate?'
+    'What app changed your life?',
+    'Could you live without this?',
+    'How does this shape your day?',
+    'What should phones do next?',
+    'How can this help you learn English?'
   ],
   'cup': [
-    'What do you use this for?',
-    'What can you put inside this object?',
-    'Where do you usually see this object?',
-    'What material is this object made of?',
-    'How does this object make your daily life easier?'
+    'What would you fill this with?',
+    'Who would you share this drink with?',
+    'What mood does this cup create?',
+    'Could this cup tell a story?',
+    'What drink feels like comfort?'
   ],
   'chair': [
-    'What do you use this object for?',
-    'Where do people usually use this object?',
-    'Describe how you use this object.',
-    'Who might need this object the most?',
-    'What would happen if this object did not exist?'
+    'Who might sit here next?',
+    'What conversation could start here?',
+    'How would you make this comfier?',
+    'What place needs this chair?',
+    'What story happened on this chair?'
   ],
   'book': [
-    'What can you learn from this object?',
-    'When do you usually use this object?',
-    'Why is this object important?',
-    'What kind of book do you enjoy reading?',
-    'How has reading a book changed your thinking?'
+    'What secret could be inside?',
+    'What title would you give this?',
+    'Where could this book take you?',
+    'What lesson might this teach?',
+    'Who should read this book?'
   ],
   'bottle': [
-    'What do you usually put in this object?',
-    'Where do you carry this object?',
-    'How do you use this object?',
-    'Why is staying hydrated important?',
-    'Describe a time when this object was very useful.'
+    'Where would you carry this?',
+    'What message could be inside?',
+    'How could this protect nature?',
+    'What adventure needs this?',
+    'What would you put in it?'
   ],
   'laptop': [
-    'What do you use a laptop for?',
-    'When do you use this object?',
-    'Why is this object useful?',
-    'How has this device changed the way people work?',
-    'What can you do on a laptop that you cannot do on a phone?'
+    'What dream project starts here?',
+    'What could you create with this?',
+    'How can this change your work?',
+    'What skill would you learn here?',
+    'What problem could this solve?'
   ],
   'keyboard': [
-    'What do you use this keyboard for?',
-    'When do you type on a keyboard?',
-    'Describe this object.',
-    'How would your work change without a keyboard?',
-    'What skills do you need to use this object well?'
+    'What message would you type?',
+    'What story could start here?',
+    'Which key feels most powerful?',
+    'What words could encourage someone?',
+    'What could you build by typing?'
   ],
   'mouse': [
-    'What do you use this mouse for?',
-    'How does this object help you?',
-    'Where do you usually see this object?',
-    'Describe how a mouse works.',
-    'Do you prefer a mouse or a touchpad? Why?'
+    'What would you click first?',
+    'How does this control ideas?',
+    'What game could this start?',
+    'What if this controlled the world?',
+    'How does this speed up work?'
   ],
   'person': [
-    'What is this person doing?',
-    'Describe this person in one sentence.',
-    'Where do you think this person is?',
-    'What do you think this person is thinking about?',
-    'How would you describe the expression on this person\'s face?'
+    'What might they be thinking?',
+    'What could they do next?',
+    'What question would you ask?',
+    'What kindness could you show?',
+    'What story could start here?'
+  ],
+  'car': [
+    'Where would this take you?',
+    'What journey could start here?',
+    'How could cars become cleaner?',
+    'What memory fits this ride?',
+    'Would you drive or walk? Why?'
+  ],
+  'bicycle': [
+    'Where would you ride this?',
+    'How does cycling feel?',
+    'What makes a ride safe?',
+    'Could this replace a car?',
+    'What freedom does this give?'
+  ],
+  'dog': [
+    'What is this dog feeling?',
+    'How would you care for it?',
+    'What makes dogs loyal?',
+    'What adventure could it have?',
+    'What would it say to you?'
+  ],
+  'cat': [
+    'What is this cat thinking?',
+    'What makes cats curious?',
+    'How would you befriend it?',
+    'What secret does it know?',
+    'What would its perfect day be?'
+  ],
+  'apple': [
+    'What makes this food healthy?',
+    'Who would you share this with?',
+    'What story starts with an apple?',
+    'How would you describe its taste?',
+    'What could you make from this?'
+  ],
+  'banana': [
+    'What energy does this give you?',
+    'When would you eat this?',
+    'What recipe could use this?',
+    'How would you describe the taste?',
+    'Who would enjoy this fruit?'
+  ],
+  'pizza': [
+    'What topping tells your style?',
+    'Who would you share this with?',
+    'What makes pizza popular?',
+    'How would you invent a new pizza?',
+    'What memory does pizza bring?'
   ],
   'tv': [
-    'What do you watch on this device?',
-    'How does this object entertain you?',
-    'How has television changed over the years?',
-    'What kind of program do you enjoy watching?',
-    'Do you think television is still important today?'
-  ],
-  'remote': [
-    'What do you use this object for?',
-    'Describe how this object works.',
-    'Which device does this remote control?'
-  ],
-  'couch': [
-    'Where do you usually find this object?',
-    'How does this object make you feel?',
-    'Describe a moment when this object was very comfortable.'
-  ],
-  'sofa': [
-    'Where do you usually find this object?',
-    'How does this object make you feel?',
-    'Why is comfortable furniture important at home?'
-  ],
-  'potted plant': [
-    'Why do people keep plants indoors?',
-    'How do you take care of this object?',
-    'What are the benefits of having plants in a room?',
-    'Describe the color and shape of this plant.'
-  ],
-  'clock': [
-    'Why is knowing the time important?',
-    'Describe how this object works.',
-    'How would your day be different without this object?'
-  ],
-  'vase': [
-    'What do people usually put in this object?',
-    'Describe the shape and color of this object.',
-    'Where do you usually see this object?'
-  ],
-  'scissors': [
-    'What do you use this object for?',
-    'Describe how this object works.',
-    'When do you most often need this object?'
-  ],
-  'pen': [
-    'What do you use this object for?',
-    'When was the last time you wrote by hand?',
-    'How is writing by hand different from typing?'
+    'What story would you watch?',
+    'Does this bring people together?',
+    'What would you show the world?',
+    'How has watching changed?',
+    'What screen habit is healthy?'
   ],
   'backpack': [
-    'What do you carry in this object?',
-    'When do you usually use this object?',
-    'Why is this object useful for students?'
+    'What dream would you pack?',
+    'Where could this bag take you?',
+    'What object must be inside?',
+    'How does this support students?',
+    'What adventure starts with this?'
   ],
   'umbrella': [
-    'When do you use this object?',
-    'How does this object protect you?',
-    'Describe a time when this object saved you from getting wet.'
-  ],
-  'handbag': [
-    'What do you carry in this object?',
-    'When do you usually bring this object?',
-    'Describe this object\'s size and color.'
-  ],
-  'tie': [
-    'When do people usually wear this object?',
-    'How do you put this object on?',
-    'What does wearing this object tell others about you?'
-  ],
-  'suitcase': [
-    'When do you use this object?',
-    'What do you pack inside this object?',
-    'Describe your most memorable trip using this object.'
-  ],
-  'bicycle': [
-    'When do you usually ride this object?',
-    'What are the benefits of cycling?',
-    'How do you stay safe when using this object?'
-  ],
-  'car': [
-    'Where do you usually travel by car?',
-    'What makes a car useful in daily life?',
-    'How would your life be different without a car?'
-  ],
-  'traffic light': [
-    'Why are traffic lights important?',
-    'Describe how traffic lights work.',
-    'What would roads be like without traffic lights?'
-  ],
-  'fire hydrant': [
-    'Why is this object important in a city?',
-    'How does this object help people?',
-    'When would you need to use this object?'
-  ],
-  'bench': [
-    'Where do you usually see this object?',
-    'How do people use this object?',
-    'Describe a time you sat on this kind of object.'
-  ],
-  'dining table': [
-    'What do people do at this object?',
-    'Describe a typical meal at a dining table.',
-    'Why is sharing a meal at a table important?'
-  ],
-  'wine glass': [
-    'What do people put in this object?',
-    'Describe the shape of this object.',
-    'When is this object typically used?'
-  ],
-  'fork': [
-    'How do you use this object?',
-    'What foods do you eat with this object?',
-    'Compare this object to another eating utensil.'
-  ],
-  'knife': [
-    'What do you use this object for in the kitchen?',
-    'How do you stay safe when using this object?',
-    'Describe how you would cut something with this object.'
-  ],
-  'spoon': [
-    'What foods do you eat with this object?',
-    'How do you use this object?',
-    'Compare this object to a fork.'
-  ],
-  'bowl': [
-    'What do you put in this object?',
-    'Describe the shape of this object.',
-    'When do you usually use this object?'
-  ],
-  'banana': [
-    'Describe the taste of this food.',
-    'What nutrients does this food provide?',
-    'How do you usually eat this fruit?'
-  ],
-  'apple': [
-    'Describe the taste and texture of this fruit.',
-    'Why are fruits important for your health?',
-    'When do you usually eat this fruit?'
-  ],
-  'orange': [
-    'Describe the taste of this fruit.',
-    'How do you peel this fruit?',
-    'What vitamins does this fruit contain?'
-  ],
-  'pizza': [
-    'Describe your favorite pizza topping.',
-    'When do you usually eat pizza?',
-    'How is pizza made from scratch?'
-  ],
-  'hot dog': [
-    'When do you usually eat this food?',
-    'Describe the taste of this food.',
-    'What toppings do you add to this food?'
-  ],
-  'sandwich': [
-    'What ingredients would you put in this sandwich?',
-    'Describe a sandwich you enjoy eating.',
-    'When do you usually eat a sandwich?'
-  ],
-  'cake': [
-    'What occasions do you celebrate with this food?',
-    'Describe your favorite flavor of this food.',
-    'How is this food made?'
-  ],
-  'donut': [
-    'Describe your favorite flavor of this food.',
-    'When do you usually eat this food?',
-    'What makes this food a popular snack?'
-  ],
-  'dog': [
-    'What do dogs need to stay healthy?',
-    'How do dogs communicate with people?',
-    'Describe a dog you have seen or owned.'
-  ],
-  'cat': [
-    'Describe the behavior of this animal.',
-    'Why do people keep cats as pets?',
-    'How do cats communicate with their owners?'
-  ],
-  'bird': [
-    'Describe the features of this animal.',
-    'Why are birds important for the environment?',
-    'Have you ever watched birds in nature? What did you see?'
-  ],
-  'horse': [
-    'What are horses used for by people?',
-    'Describe the size and features of this animal.',
-    'How do you care for a horse?'
-  ],
-  'cow': [
-    'What products do we get from this animal?',
-    'Describe where this animal usually lives.',
-    'Why is this animal important in farming?'
-  ],
-  'sheep': [
-    'What products do we get from this animal?',
-    'Describe the appearance of this animal.',
-    'Where do sheep usually live?'
-  ],
-  'elephant': [
-    'Describe the special features of this animal.',
-    'Why are elephants considered intelligent?',
-    'What challenges do elephants face in the wild?'
-  ],
-  'bear': [
-    'Describe the habitat of this animal.',
-    'How does this animal survive in winter?',
-    'What do bears eat in the wild?'
-  ],
-  'zebra': [
-    'Describe the unique appearance of this animal.',
-    'Where do zebras live in the wild?',
-    'Why do you think zebras have stripes?'
-  ],
-  'giraffe': [
-    'Describe the unique features of this animal.',
-    'How does this animal\'s body help it survive?',
-    'Where do giraffes live in the wild?'
-  ],
-  // --- ยานพาหนะ ---
-  'bicycle': [
-    'When do you usually ride this object?',
-    'What are the benefits of cycling?',
-    'How do you stay safe when using this object?',
-    'Describe the parts of this object.',
-    'Is cycling popular in your city? Why or why not?'
-  ],
-  'car': [
-    'Where do you usually travel by car?',
-    'What makes a car useful in daily life?',
-    'How would your life be different without a car?',
-    'Describe the features of a modern car.',
-    'What is the environmental impact of using a car?'
-  ],
-  'motorcycle': [
-    'When do people use a motorcycle instead of a car?',
-    'What safety equipment do you need when riding this?',
-    'Describe the advantages and disadvantages of this vehicle.',
-    'Is riding a motorcycle popular where you live?'
-  ],
-  'airplane': [
-    'How does this object help people travel?',
-    'Describe what it feels like to travel on this object.',
-    'What technology makes this object fly?',
-    'Where is the farthest place you have traveled by this?'
-  ],
-  'bus': [
-    'Why is public transportation like this important?',
-    'Describe a typical bus journey.',
-    'How does this object benefit a city?',
-    'When do you prefer using this over a car?'
-  ],
-  'train': [
-    'What are the advantages of traveling by train?',
-    'Describe a memorable train journey.',
-    'How does this object compare to other forms of transport?',
-    'Why do some countries rely heavily on trains?'
-  ],
-  'truck': [
-    'What is this vehicle used for?',
-    'How does this object help the economy?',
-    'Describe the size and features of this vehicle.',
-    'What kinds of things do trucks carry?'
-  ],
-  'boat': [
-    'Where do you use this object?',
-    'Describe what it feels like to ride on this.',
-    'What are the different types of this object?',
-    'Why do people use this instead of flying?'
-  ],
-  // --- สัญญาณจราจร / สาธารณะ ---
-  'traffic light': [
-    'Why are traffic lights important?',
-    'Describe how traffic lights work.',
-    'What would roads be like without traffic lights?',
-    'How do you behave at a traffic light?'
-  ],
-  'fire hydrant': [
-    'Why is this object important in a city?',
-    'How does this object help people?',
-    'When would you need to use this object?',
-    'Where do you usually see this object?'
-  ],
-  'stop sign': [
-    'Why is this sign important for road safety?',
-    'Describe what drivers must do when they see this.',
-    'What would happen if this sign did not exist?'
-  ],
-  'parking meter': [
-    'What is this object used for?',
-    'How does this object help manage city parking?',
-    'Have you ever used one of these? Describe the experience.'
-  ],
-  'bench': [
-    'Where do you usually see this object?',
-    'How do people use this object?',
-    'Describe a time you sat on this kind of object.',
-    'Why are benches important in public spaces?'
-  ],
-  // --- สัตว์เพิ่มเติม ---
-  'bird': [
-    'Describe the features of this animal.',
-    'Why are birds important for the environment?',
-    'Have you ever watched birds in nature? What did you see?',
-    'What sounds does this animal make?'
-  ],
-  'cat': [
-    'Describe the behavior of this animal.',
-    'Why do people keep cats as pets?',
-    'How do cats communicate with their owners?',
-    'Compare cats and dogs as pets.'
-  ],
-  'dog': [
-    'What do dogs need to stay healthy?',
-    'How do dogs communicate with people?',
-    'Describe a dog you have seen or owned.',
-    'Why are dogs called man\'s best friend?'
-  ],
-  'horse': [
-    'What are horses used for by people?',
-    'Describe the size and features of this animal.',
-    'How do you care for a horse?',
-    'Where do horses usually live?'
-  ],
-  'sheep': [
-    'What products do we get from this animal?',
-    'Describe the appearance of this animal.',
-    'Where do sheep usually live?',
-    'How do farmers care for this animal?'
-  ],
-  'cow': [
-    'What products do we get from this animal?',
-    'Describe where this animal usually lives.',
-    'Why is this animal important in farming?',
-    'How does this animal contribute to your diet?'
-  ],
-  'elephant': [
-    'Describe the special features of this animal.',
-    'Why are elephants considered intelligent?',
-    'What challenges do elephants face in the wild?',
-    'How do elephants communicate with each other?'
-  ],
-  'bear': [
-    'Describe the habitat of this animal.',
-    'How does this animal survive in winter?',
-    'What do bears eat in the wild?',
-    'Why is it important to protect bears?'
-  ],
-  'zebra': [
-    'Describe the unique appearance of this animal.',
-    'Where do zebras live in the wild?',
-    'Why do you think zebras have stripes?',
-    'How do zebras protect themselves from predators?'
-  ],
-  // --- กีฬา ---
-  'frisbee': [
-    'How do you play with this object?',
-    'Describe the shape and material of this object.',
-    'When do you usually use this object?'
-  ],
-  'skis': [
-    'Where do people use this object?',
-    'Describe the skills needed to use this object.',
-    'Have you ever used this object? What was it like?'
-  ],
-  'snowboard': [
-    'Where do people use this object?',
-    'How is this object different from skis?',
-    'What skills do you need to use this object?'
-  ],
-  'sports ball': [
-    'What sport is this ball used in?',
-    'Describe how this ball is used in a game.',
-    'What skills do you need to play with this?'
-  ],
-  'kite': [
-    'When do people fly this object?',
-    'Describe what you need to fly this object.',
-    'Have you ever flown one of these? What was it like?'
-  ],
-  'baseball bat': [
-    'What sport is this object used in?',
-    'Describe how you use this object.',
-    'What skills do you need to use this object well?'
-  ],
-  'baseball glove': [
-    'What sport is this object used in?',
-    'Describe the purpose of this object.',
-    'How do you use this object in a game?'
-  ],
-  'skateboard': [
-    'Where do people usually use this object?',
-    'Describe the skills needed to use this object.',
-    'What safety gear do you need when using this?'
-  ],
-  'surfboard': [
-    'Where do people use this object?',
-    'Describe how you use this object.',
-    'What skills do you need to surf?'
-  ],
-  'tennis racket': [
-    'What sport uses this object?',
-    'Describe how you hold and use this object.',
-    'What skills do you need to play this sport well?'
-  ],
-  // --- ครัว / อาหาร ---
-  'bottle': [
-    'What do you usually put in this object?',
-    'Where do you carry this object?',
-    'How do you use this object?',
-    'Why is staying hydrated important?',
-    'Describe a time when this object was very useful.'
-  ],
-  'wine glass': [
-    'What do people put in this object?',
-    'Describe the shape of this object.',
-    'When is this object typically used?'
-  ],
-  'cup': [
-    'What do you use this for?',
-    'What can you put inside this object?',
-    'Where do you usually see this object?',
-    'What material is this object made of?',
-    'How does this object make your daily life easier?'
-  ],
-  'fork': [
-    'How do you use this object?',
-    'What foods do you eat with this object?',
-    'Compare this object to another eating utensil.'
-  ],
-  'knife': [
-    'What do you use this object for in the kitchen?',
-    'How do you stay safe when using this object?',
-    'Describe how you would cut something with this object.'
-  ],
-  'spoon': [
-    'What foods do you eat with this object?',
-    'How do you use this object?',
-    'Compare this object to a fork.'
-  ],
-  'bowl': [
-    'What do you put in this object?',
-    'Describe the shape of this object.',
-    'When do you usually use this object?'
-  ],
-  'banana': [
-    'Describe the taste of this food.',
-    'What nutrients does this food provide?',
-    'How do you usually eat this fruit?',
-    'In what dishes can you use this fruit?'
-  ],
-  'apple': [
-    'Describe the taste and texture of this fruit.',
-    'Why are fruits important for your health?',
-    'When do you usually eat this fruit?',
-    'What can you make with this fruit?'
-  ],
-  'sandwich': [
-    'What ingredients would you put in this?',
-    'Describe a sandwich you enjoy eating.',
-    'When do you usually eat a sandwich?'
-  ],
-  'orange': [
-    'Describe the taste of this fruit.',
-    'How do you peel this fruit?',
-    'What vitamins does this fruit contain?'
-  ],
-  'broccoli': [
-    'Why is this vegetable good for your health?',
-    'How do you usually cook this vegetable?',
-    'Do you enjoy eating this? Why or why not?'
-  ],
-  'carrot': [
-    'What are the health benefits of this vegetable?',
-    'How do you usually eat this vegetable?',
-    'Describe the color and texture of this vegetable.'
-  ],
-  'hot dog': [
-    'When do you usually eat this food?',
-    'Describe the taste of this food.',
-    'What toppings do you add to this food?'
-  ],
-  'pizza': [
-    'Describe your favorite pizza topping.',
-    'When do you usually eat pizza?',
-    'How is pizza made from scratch?',
-    'Why is pizza so popular around the world?'
-  ],
-  'donut': [
-    'Describe your favorite flavor of this food.',
-    'When do you usually eat this food?',
-    'What makes this food a popular snack?'
-  ],
-  'cake': [
-    'What occasions do you celebrate with this food?',
-    'Describe your favorite flavor of this food.',
-    'How is this food made?'
-  ],
-  // --- เฟอร์นิเจอร์ / บ้าน ---
-  'chair': [
-    'What do you use this object for?',
-    'Where do people usually use this object?',
-    'Describe how you use this object.',
-    'Who might need this object the most?',
-    'What would happen if this object did not exist?'
-  ],
-  'couch': [
-    'Where do you usually find this object?',
-    'How does this object make you feel?',
-    'Describe a moment when this object was very comfortable.',
-    'Why is comfortable furniture important at home?'
-  ],
-  'potted plant': [
-    'Why do people keep plants indoors?',
-    'How do you take care of this object?',
-    'What are the benefits of having plants in a room?',
-    'Describe the color and shape of this plant.'
-  ],
-  'bed': [
-    'Why is sleep important for your health?',
-    'Describe your ideal sleeping environment.',
-    'How many hours of sleep do you usually get?',
-    'What makes a bed comfortable?'
-  ],
-  'dining table': [
-    'What do people do at this object?',
-    'Describe a typical meal at a dining table.',
-    'Why is sharing a meal at a table important?',
-    'What memories do you have around a dining table?'
-  ],
-  'toilet': [
-    'Why is clean sanitation important?',
-    'Describe how this object has improved modern life.',
-    'Why do we take this object for granted?'
-  ],
-  'tv': [
-    'What do you watch on this device?',
-    'How does this object entertain you?',
-    'How has television changed over the years?',
-    'What kind of program do you enjoy watching?',
-    'Do you think television is still important today?'
-  ],
-  // --- อุปกรณ์ไฟฟ้า / เทคโนโลยี ---
-  'laptop': [
-    'What do you use a laptop for?',
-    'When do you use this object?',
-    'Why is this object useful?',
-    'How has this device changed the way people work?',
-    'What can you do on a laptop that you cannot do on a phone?'
-  ],
-  'mouse': [
-    'What do you use this mouse for?',
-    'How does this object help you?',
-    'Where do you usually see this object?',
-    'Describe how a mouse works.',
-    'Do you prefer a mouse or a touchpad? Why?'
-  ],
-  'remote': [
-    'What do you use this object for?',
-    'Describe how this object works.',
-    'Which device does this remote control?',
-    'What would you do if you could not find this object?'
-  ],
-  'keyboard': [
-    'What do you use this keyboard for?',
-    'When do you type on a keyboard?',
-    'Describe this object.',
-    'How would your work change without a keyboard?',
-    'What skills do you need to use this object well?'
-  ],
-  'cell phone': [
-    'How do you use this object?',
-    'When do you usually use this object?',
-    'Why is this object useful?',
-    'What would life be like without this device?',
-    'How has this object changed the way people communicate?'
-  ],
-  'microwave': [
-    'What do you use this object for?',
-    'How does this object save you time?',
-    'Describe how a microwave works.',
-    'What foods do you heat in this object?'
-  ],
-  'oven': [
-    'What do you cook in this object?',
-    'Describe how to use this object safely.',
-    'How has this object changed the way people cook?',
-    'What is your favorite food to make in an oven?'
-  ],
-  'toaster': [
-    'What do you put in this object?',
-    'Describe how this object works.',
-    'When do you usually use this object?'
-  ],
-  'sink': [
-    'Why is this object important for hygiene?',
-    'Describe the different uses of this object.',
-    'Where do you find this object in a home?'
-  ],
-  'refrigerator': [
-    'What do you keep in this object?',
-    'Why is this object important for food safety?',
-    'Describe how this object keeps food fresh.',
-    'What would happen if this object stopped working?'
-  ],
-  // --- ของใช้ / อื่น ๆ ---
-  'book': [
-    'What can you learn from this object?',
-    'When do you usually use this object?',
-    'Why is this object important?',
-    'What kind of book do you enjoy reading?',
-    'How has reading a book changed your thinking?'
+    'Who would you share this with?',
+    'What does this protect from?',
+    'What rainy story starts here?',
+    'How could this design improve?',
+    'What weather needs this most?'
   ],
   'clock': [
-    'Why is knowing the time important?',
-    'Describe how this object works.',
-    'How would your day be different without this object?',
-    'What type of clock do you prefer — digital or analog?'
-  ],
-  'vase': [
-    'What do people usually put in this object?',
-    'Describe the shape and color of this object.',
-    'Where do you usually see this object?'
-  ],
-  'scissors': [
-    'What do you use this object for?',
-    'Describe how this object works.',
-    'When do you most often need this object?',
-    'What safety rules should you follow with this object?'
+    'What moment matters most?',
+    'How do you spend your time?',
+    'What would you pause today?',
+    'How does time shape choices?',
+    'What time would you revisit?'
   ],
   'teddy bear': [
-    'Why do children love this object?',
-    'Describe a memory you have with this kind of toy.',
-    'How does this object bring comfort to people?'
-  ],
-  'hair drier': [
-    'How do you use this object?',
-    'When do you use this object in your daily routine?',
-    'Describe how this object works.'
-  ],
-  'toothbrush': [
-    'Why is dental hygiene important?',
-    'Describe your daily routine with this object.',
-    'How often should you replace this object?'
-  ],
-  // --- กระเป๋า / เครื่องแต่งกาย ---
-  'backpack': [
-    'What do you carry in this object?',
-    'When do you usually use this object?',
-    'Why is this object useful for students?',
-    'Describe the features of a good backpack.'
-  ],
-  'umbrella': [
-    'When do you use this object?',
-    'How does this object protect you?',
-    'Describe a time when this object saved you from getting wet.',
-    'What types of weather require this object?'
-  ],
-  'handbag': [
-    'What do you carry in this object?',
-    'When do you usually bring this object?',
-    'Describe this object\'s size and color.',
-    'Why is this object a fashion accessory as well as practical?'
-  ],
-  'tie': [
-    'When do people usually wear this object?',
-    'How do you put this object on?',
-    'What does wearing this object tell others about you?'
-  ],
-  'suitcase': [
-    'When do you use this object?',
-    'What do you pack inside this object?',
-    'Describe your most memorable trip using this object.',
-    'What features make a good suitcase?'
-  ],
-  // --- คน ---
-  'person': [
-    'What is this person doing?',
-    'Describe this person in one sentence.',
-    'Where do you think this person is?',
-    'What do you think this person is thinking about?',
-    'How would you describe the expression on this person\'s face?'
+    'What comfort does this give?',
+    'Who might love this toy?',
+    'What childhood memory appears?',
+    'What name would you give it?',
+    'What secret could it keep?'
   ]
-}; // end QUESTION_BANK
+};
 
-// =====================================================
-// pickQuestion: เลือกคำถามจาก QUESTION_BANK หรือ DEFAULT_QUESTIONS
-// =====================================================
+function getDisplayObjectName(objectName) {
+  if (objectName === UNKNOWN_OBJECT_CLASS) return 'mystery object';
+  return objectName;
+}
+
+function formatQuestionText(text, objectName) {
+  return text.replace(/\{object\}/g, getDisplayObjectName(objectName));
+}
+
+function buildQuestionPool(objectName) {
+  if (objectName === UNKNOWN_OBJECT_CLASS) {
+    return MYSTERY_OBJECT_QUESTIONS;
+  }
+
+  const category = OBJECT_CATEGORY[objectName];
+  const pool = [];
+  if (QUESTION_BANK[objectName]) pool.push(...QUESTION_BANK[objectName]);
+  if (category && CATEGORY_QUESTIONS[category]) pool.push(...CATEGORY_QUESTIONS[category]);
+  pool.push(...KNOWN_OBJECT_THINKING_QUESTIONS);
+  return pool;
+}
 
 /**
  * สุ่มคำถามสำหรับวัตถุที่ตรวจเจอ
- * - ถ้ามีใน QUESTION_BANK → สุ่มจาก QUESTION_BANK[objectName]
- * - ถ้าไม่มี → สุ่มจาก DEFAULT_QUESTIONS
- *
- * @param {string} objectName - ชื่อวัตถุจาก COCO-SSD
- * @param {string} lastQ      - คำถามล่าสุด (ป้องกันซ้ำ)
- * @returns {string} คำถาม
+ * - วัตถุที่รู้จัก → ใช้คำถามเฉพาะ + คำถามตามหมวด + คำถามชวนคิด
+ * - วัตถุที่ไม่รู้จัก → ใช้ mystery object questions
  */
 function pickQuestion(objectName, lastQ) {
-  const pool = QUESTION_BANK[objectName] || DEFAULT_QUESTIONS;
-
-  // สุ่มโดยพยายามไม่ซ้ำกับคำถามล่าสุด
+  const pool = buildQuestionPool(objectName);
   let q;
   let attempts = 0;
   do {
-    q = pool[Math.floor(Math.random() * pool.length)];
+    q = formatQuestionText(pool[Math.floor(Math.random() * pool.length)], objectName);
     attempts++;
   } while (q === lastQ && pool.length > 1 && attempts < 10);
-
   return q;
 }
 
@@ -2015,6 +1392,7 @@ const CONFIDENCE_THRESHOLD = 0.65;   // confidence ขั้นต่ำ 65%
 const DETECTION_INTERVAL   = 1100;   // ตรวจจับทุก ~1100ms
 const LOCK_REQUIRED_COUNT  = 3;      // ต้องเจอวัตถุเดิมกี่ครั้งก่อนล็อก
 const LOCK_DURATION        = 6000;   // ล็อกคำถามนานกี่ ms
+const MYSTERY_REQUIRED_COUNT = 3;     // ไม่เจอวัตถุที่รู้จักกี่รอบ จึงขึ้น mystery question
 
 // ขนาดโซนกลางจอ (เปอร์เซ็นต์ของ canvas)
 const CENTER_ZONE_RATIO    = 0.45;   // 45% ของความกว้าง/สูง
@@ -2030,6 +1408,7 @@ let candidateCount  = 0;       // นับครั้งที่เจอว�
 let lockedObject    = null;    // วัตถุที่ล็อกแล้ว (แสดงคำถาม)
 let lockExpiry      = 0;       // เวลาหมดล็อก (Date.now())
 let lastQuestion    = '';      // คำถามล่าสุด (ป้องกันซ้ำ)
+let mysteryCount    = 0;       // นับรอบที่ไม่เจอวัตถุที่รู้จัก
 
 // ---- DOM references ----
 const videoEl        = document.getElementById('videoEl');
@@ -2270,19 +1649,28 @@ function startDetection() {
     drawBoxes(validPreds);
 
     if (validPreds.length === 0) {
-      // ไม่พบวัตถุ — reset candidate (แต่รักษา lock ไว้ถ้ายังไม่หมด)
+      // ไม่พบวัตถุที่ AI รู้จัก — เปลี่ยนเป็นคำถาม mystery แบบชวนคิด
       candidateObject = null;
       candidateCount  = 0;
       updateLockDots(0);
 
-      if (Date.now() >= lockExpiry) {
-        // หมด lock แล้ว ซ่อนคำถาม
-        lockedObject = null;
-        hideQuestion();
-        updateStatus('🔍 สแกน', 'scanning');
+      if (lockedObject && Date.now() < lockExpiry) {
+        return;
       }
+
+      mysteryCount++;
+
+      if (mysteryCount >= MYSTERY_REQUIRED_COUNT) {
+        lockMysteryObject();
+      } else {
+        updateStatus('', 'scanning');
+      }
+
       return;
     }
+
+    // เจอวัตถุที่รู้จักแล้ว reset mystery count
+    mysteryCount = 0;
 
     // ---- เลือกวัตถุที่ใกล้กลางจอมากที่สุด (Center Priority) ----
     const selected = selectCenterObject(validPreds);
@@ -2334,6 +1722,7 @@ function resetDetectionState() {
   lockedObject    = null;
   lockExpiry      = 0;
   lastQuestion    = '';
+  mysteryCount    = 0;
   hideQuestion();
   updateLockDots(0);
 }
@@ -2419,10 +1808,26 @@ function lockObject(objClass, pred) {
   lockExpiry      = Date.now() + LOCK_DURATION;
   candidateObject = null;
   candidateCount  = 0;
+  mysteryCount    = 0;
   updateLockDots(0);
 
   showQuestion(objClass, pred);
-  updateStatus('✅ พบแล้ว', 'found');
+  updateStatus('', 'found');
+}
+
+/**
+ * ล็อกเป็น mystery object เมื่อ AI ยังไม่รู้จักวัตถุที่อยู่หน้ากล้อง
+ */
+function lockMysteryObject() {
+  lockedObject    = UNKNOWN_OBJECT_CLASS;
+  lockExpiry      = Date.now() + LOCK_DURATION;
+  candidateObject = null;
+  candidateCount  = 0;
+  mysteryCount    = 0;
+  updateLockDots(0);
+
+  showQuestion(UNKNOWN_OBJECT_CLASS, null);
+  updateStatus('', 'found');
 }
 
 /**
@@ -2438,14 +1843,14 @@ function showQuestion(objClass, pred) {
   lastQuestion = q;
 
   // ---- 2. อัปเดตข้อความ ----
-  popupObjectLabel.textContent = objClass;
+  popupObjectLabel.textContent = getDisplayObjectName(objClass);
   popupQuestionTxt.textContent  = q;
 
-  // ปรับขนาดตัวอักษรตามความยาวคำถามให้อ่านง่ายบนมือถือ/iPad
+  // ปรับขนาดตามความยาวคำถาม เพื่อให้อยู่ใกล้ 2 บรรทัดที่สุด
   questionPopup.classList.remove('long-question', 'very-long-question');
   if (q.length > 64) {
     questionPopup.classList.add('very-long-question');
-  } else if (q.length > 42) {
+  } else if (q.length > 46) {
     questionPopup.classList.add('long-question');
   }
 
@@ -2492,8 +1897,8 @@ function positionPopup(pred) {
   const offsetY = (ch - vh * scale) / 2;
 
   // ขนาด popup (ประมาณ — JS ไม่รู้ความสูงก่อน render)
-  const popW = Math.min(sw * 0.88, sw >= 700 ? 640 : 560);
-  const popH = Math.max(86, questionPopup.offsetHeight || 110); // ประมาณความสูงของข้อความ 3D
+  const popW = Math.min(sw * 0.88, 460);
+  const popH = Math.max(130, questionPopup.offsetHeight || 170); // ประมาณความสูงของข้อความ 3D
 
   let targetX, targetY; // จุดอ้างอิง (มุมบนซ้ายของ popup)
 
