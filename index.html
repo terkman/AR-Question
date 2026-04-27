@@ -826,6 +826,210 @@
       }
     }
 
+    /* ===================================================
+       READABLE AR QUESTION TEXT OVERRIDE
+       ปรับเฉพาะข้อความคำถามบนหน้ากล้องให้อ่านง่ายขึ้น
+       - ยังไม่มีพื้นหลัง popup
+       - ยังไม่มีกรอบสแกน
+       - เน้นตัวอักษรใหญ่ สีชัด มีขอบดำและเงาแบบ 3D
+    =================================================== */
+
+    #questionPopup {
+      width: min(92vw, 620px) !important;
+      padding: 0 8px !important;
+      text-align: center !important;
+      filter:
+        drop-shadow(0 18px 18px rgba(0,0,0,0.72))
+        drop-shadow(0 0 18px rgba(0,255,224,0.20)) !important;
+    }
+
+    .popup-object-tag {
+      margin-bottom: 10px !important;
+      font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-size: clamp(15px, 3.8vw, 23px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.2px !important;
+      color: #27ffe6 !important;
+      -webkit-text-stroke: 0.7px rgba(0,0,0,0.85) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 2px 0 #007a70,
+        0 5px 8px rgba(0,0,0,0.90),
+        0 0 10px rgba(0,255,224,0.85),
+        0 0 24px rgba(0,255,224,0.45) !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+      font-size: clamp(30px, 8.2vw, 58px) !important;
+      font-weight: 900 !important;
+      line-height: 1.12 !important;
+      letter-spacing: -0.25px !important;
+      color: #fff7d6 !important;
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
+      word-break: normal !important;
+      text-wrap: balance;
+      -webkit-text-stroke: 1.35px rgba(0,0,0,0.90) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 1px 0 #ffffff,
+        0 3px 0 #ffd447,
+        0 6px 0 #d88900,
+        0 10px 8px rgba(0,0,0,0.98),
+        0 16px 24px rgba(0,0,0,0.85),
+        0 0 4px rgba(0,0,0,1),
+        0 0 18px rgba(0,255,224,0.65),
+        0 0 36px rgba(255,212,71,0.40) !important;
+      transform: translateZ(44px) !important;
+    }
+
+    /* ถ้าคำถามยาว ให้ลดขนาดอัตโนมัติ เพื่อไม่ล้นจอ */
+    #questionPopup.long-question #popupQuestionText {
+      font-size: clamp(25px, 6.5vw, 46px) !important;
+      line-height: 1.16 !important;
+      -webkit-text-stroke-width: 1.15px !important;
+    }
+
+    #questionPopup.very-long-question #popupQuestionText {
+      font-size: clamp(21px, 5.4vw, 36px) !important;
+      line-height: 1.18 !important;
+      -webkit-text-stroke-width: 1px !important;
+      letter-spacing: 0 !important;
+    }
+
+    @media (min-width: 700px) {
+      #questionPopup {
+        width: min(84vw, 720px) !important;
+      }
+
+      #popupQuestionText {
+        font-size: clamp(42px, 6.2vw, 72px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(34px, 5vw, 56px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(28px, 4vw, 44px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #popupQuestionText {
+        font-size: clamp(27px, 8vw, 42px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(23px, 6.2vw, 34px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(20px, 5.2vw, 30px) !important;
+      }
+    }
+
+
+    /* ===================================================
+       FINAL QUESTION FONT OVERRIDE
+       ใช้ฟอนต์เดียวกับหน้าหลัก และจำกัดคำถามไม่เกิน 2 บรรทัด
+    =================================================== */
+
+    #questionPopup {
+      width: min(88vw, 560px) !important;
+      padding: 0 10px !important;
+      text-align: center !important;
+      filter:
+        drop-shadow(0 14px 16px rgba(0,0,0,0.68))
+        drop-shadow(0 0 12px rgba(0,255,224,0.18)) !important;
+    }
+
+    .popup-object-tag {
+      font-family: var(--font-en), var(--font-th), sans-serif !important;
+      font-size: clamp(11px, 2.8vw, 15px) !important;
+      font-weight: 800 !important;
+      letter-spacing: 1.6px !important;
+      margin-bottom: 6px !important;
+      color: #00ffe0 !important;
+      -webkit-text-stroke: 0.45px rgba(0,0,0,0.75) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 2px 5px rgba(0,0,0,0.95),
+        0 0 12px rgba(0,255,224,0.70) !important;
+    }
+
+    #popupQuestionText {
+      font-family: var(--font-en), var(--font-th), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-size: clamp(20px, 5.6vw, 36px) !important;
+      font-weight: 800 !important;
+      line-height: 1.08 !important;
+      letter-spacing: -0.35px !important;
+      color: #ffffff !important;
+      max-width: 100% !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      overflow-wrap: anywhere !important;
+      word-break: normal !important;
+      -webkit-text-stroke: 0.95px rgba(0,0,0,0.88) !important;
+      paint-order: stroke fill !important;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.80),
+        0 3px 0 rgba(0,199,177,0.55),
+        0 7px 8px rgba(0,0,0,0.92),
+        0 13px 18px rgba(0,0,0,0.78),
+        0 0 18px rgba(0,255,224,0.44) !important;
+      transform: translateZ(34px) !important;
+    }
+
+    #questionPopup.long-question #popupQuestionText {
+      font-size: clamp(18px, 4.9vw, 30px) !important;
+      line-height: 1.09 !important;
+      letter-spacing: -0.2px !important;
+      -webkit-text-stroke-width: 0.85px !important;
+    }
+
+    #questionPopup.very-long-question #popupQuestionText {
+      font-size: clamp(16px, 4.25vw, 24px) !important;
+      line-height: 1.10 !important;
+      letter-spacing: 0 !important;
+      -webkit-text-stroke-width: 0.75px !important;
+    }
+
+    @media (min-width: 700px) {
+      #questionPopup {
+        width: min(82vw, 640px) !important;
+      }
+
+      #popupQuestionText {
+        font-size: clamp(24px, 4.3vw, 42px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(21px, 3.7vw, 34px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(18px, 3.1vw, 28px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #popupQuestionText {
+        font-size: clamp(18px, 5.3vw, 30px) !important;
+      }
+
+      #questionPopup.long-question #popupQuestionText {
+        font-size: clamp(16px, 4.6vw, 25px) !important;
+      }
+
+      #questionPopup.very-long-question #popupQuestionText {
+        font-size: clamp(15px, 4.0vw, 21px) !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2237,6 +2441,14 @@ function showQuestion(objClass, pred) {
   popupObjectLabel.textContent = objClass;
   popupQuestionTxt.textContent  = q;
 
+  // ปรับขนาดตัวอักษรตามความยาวคำถามให้อ่านง่ายบนมือถือ/iPad
+  questionPopup.classList.remove('long-question', 'very-long-question');
+  if (q.length > 64) {
+    questionPopup.classList.add('very-long-question');
+  } else if (q.length > 42) {
+    questionPopup.classList.add('long-question');
+  }
+
   // ---- 3. คำนวณตำแหน่ง popup ใกล้วัตถุ ----
   positionPopup(pred);
 
@@ -2280,8 +2492,8 @@ function positionPopup(pred) {
   const offsetY = (ch - vh * scale) / 2;
 
   // ขนาด popup (ประมาณ — JS ไม่รู้ความสูงก่อน render)
-  const popW = Math.min(sw * 0.88, 460);
-  const popH = Math.max(130, questionPopup.offsetHeight || 170); // ประมาณความสูงของข้อความ 3D
+  const popW = Math.min(sw * 0.88, sw >= 700 ? 640 : 560);
+  const popH = Math.max(86, questionPopup.offsetHeight || 110); // ประมาณความสูงของข้อความ 3D
 
   let targetX, targetY; // จุดอ้างอิง (มุมบนซ้ายของ popup)
 
